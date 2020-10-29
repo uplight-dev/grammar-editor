@@ -1,0 +1,23 @@
+.node {
+color: #444;
+}
+
+.name {
+color: steelblue;
+}
+
+.selected .description {
+background: bisque;
+}
+
+.error {
+color: red;
+}
+
+.description {
+display: inline-block;
+}
+
+.children {
+padding-left: 20px;
+}

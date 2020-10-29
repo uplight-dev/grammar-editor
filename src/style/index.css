@@ -1,0 +1,532 @@
+html,
+body {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: #FAFAFA;
+    font-family: 'Helvetica Neue', arial, sans-serif;
+    font-weight: 400;
+    color: #444;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+#app {
+    height: 100%;
+}
+
+.title, .title a {
+    font-weight: bolder;
+    color: white;
+}
+
+.title a {
+    font-weight: normal;
+    font-size: small;
+}
+
+/* GRID */
+
+.grid1x {
+    display: grid;
+    grid-template-columns: auto;
+    grid-row-gap: 10px;
+}
+
+
+/* MODAL */
+
+.Modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    padding: 3px;
+    background-color: papayawhip;
+    border: 1px solid black;
+}
+
+.Overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.85);
+}
+
+.ReactModal__Overlay {
+    opacity: 0;
+    transition: opacity 200ms ease-in-out;
+}
+
+.ReactModal__Overlay--after-open {
+    opacity: 1;
+}
+
+.ReactModal__Overlay--before-close {
+    opacity: 0;
+    transition: opacity 200ms ease-in-out;
+}
+
+.modal-title {
+    font-weight: bolder;
+    display: block;
+    color: white;
+    background: blue;
+    border: 1px solid black;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+
+/* TABS */
+
+.react-tabs {
+    -webkit-tap-highlight-color: transparent;
+    height: 90%;
+}
+
+.react-tabs__title-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    background-color: blue;
+    color: white;
+    border-bottom: 1px solid #aaa;
+}
+
+.react-tabs__title {
+    display: flex;
+    justify-content: flex-start;
+    margin-left: 10px;
+    font-style: italic;
+    font-weight: bold;
+}
+
+.react-tabs__tab-list {
+    margin-left: auto;
+    margin-block-start: 0;
+    margin-block-end: 0;
+    padding: 0;
+}
+
+.react-tabs__tab {
+    display: inline-block;
+    border: 1px solid transparent;
+    border-bottom: none;
+    bottom: -1px;
+    position: relative;
+    list-style: none;
+    padding: 5px 5px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.react-tabs__tab--selected {
+    background: #fff;
+    border-color: #aaa;
+    color: black;
+    border-radius: 2px 2px 0 0;
+}
+
+.react-tabs__tab--disabled {
+    color: GrayText;
+    cursor: default;
+}
+
+.react-tabs__tab:focus {
+    outline: none;
+}
+
+.react-tabs__tab:focus:after {
+    content: "";
+    position: absolute;
+    height: 5px;
+    left: -4px;
+    right: -4px;
+    bottom: -5px;
+}
+
+.react-tabs__tab-panel {
+    display: none;
+}
+
+.react-tabs__tab-panel--selected {
+    display: block;
+    height: 100%;
+}
+
+
+/* BUTTONS */
+
+.button-bar {
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    padding: 10px;
+}
+
+.button-bar button:nth-child(1) {
+    grid-column-start: 4;
+    grid-column-end: 4;
+}
+
+.button-bar button:nth-child(2) {
+    grid-column-start: 3;
+    grid-column-end: 3;
+}
+
+button {
+    color: #444444;
+    background: #F3F3F3;
+    border: 1px #DADADA solid;
+    padding: 5px 10px;
+    border-radius: 2px;
+    font-weight: bold;
+    font-size: 9pt;
+    outline: none;
+}
+
+button:hover {
+    border: 1px #C6C6C6 solid;
+    box-shadow: 1px 1px 1px #EAEAEA;
+    color: #333333;
+    background: #F7F7F7;
+}
+
+button:active {
+    box-shadow: inset 1px 1px 1px #DFDFDF;
+}
+
+button.blue {
+    color: white;
+    background: #4C8FFB;
+    border: 1px #3079ED solid;
+    box-shadow: inset 0 1px 0 #80B0FB;
+}
+
+button.blue:hover {
+    border: 1px #2F5BB7 solid;
+    box-shadow: 0 1px 1px #EAEAEA, inset 0 1px 0 #5A94F1;
+    background: #3F83F1;
+}
+
+button.blue:active {
+    box-shadow: inset 0 2px 5px #2370FE;
+}
+
+button.orange {
+    color: white;
+    border: 1px solid #FB8F3D;
+    background-image: linear-gradient(0deg, #FDA251 0%, #FB8F3D 100%);
+}
+
+button.orange:hover {
+    border: 1px solid #EB5200;
+    background-image: linear-gradient(0deg, #FD924C 0%, #F9760B 100%);
+    box-shadow: 0 1px #EFEFEF;
+}
+
+button.orange:active {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+
+/* Red Google Button as seen on drive.google.com */
+
+button.red {
+    background-image: linear-gradient(0deg, #DD4B39 0%, #D14836 100%);
+    border: 1px solid #DD4B39;
+    color: white;
+    text-shadow: 0 1px 0 #C04131;
+}
+
+button.red:hover {
+    background-image: linear-gradient(0deg, #DD4B39 0%, #C53727 100%);
+    border: 1px solid #AF301F;
+}
+
+button.red:active {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.8);
+    background-image: linear-gradient(0deg, #D74736 0%, #AD2719 100%);
+}
+
+
+/* UNPROCESSED - OTHER */
+
+.topcontainer {
+    height: 100vh;
+}
+
+.hcontainer,
+.vcontainer {
+    display: flex;
+    align-self: stretch;
+    flex: 1;
+    overflow: hidden;
+}
+
+.vcontainer {
+    flex-direction: column;
+}
+
+.hcontainer {
+    flex-direction: row;
+    gap: 2px;
+}
+
+.flex-vcenter {
+    align-items: center;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    margin: 20px 0 0px 0;
+}
+
+.container .content {
+    flex: 1;
+    align-self: stretch;
+}
+
+input.repo-url {
+    width: 500px;
+}
+
+.CodeMirror {
+    height: 100%;
+    z-index: 0;
+}
+
+header {
+    box-shadow: 0 0 3px 0 #999;
+    background: hsl207, 56%, 99%;
+    margin: 0;
+    margin-bottom: 10px;
+    padding: 7px 10px;
+}
+
+header.hcontainer {
+    flex-grow: 0;
+    flex-shrink: 0;
+    overflow: initial;
+    align-items: center;
+}
+
+.logo {
+    margin: 0;
+    display: block;
+    height: 26px;
+}
+
+.logo img {
+    height: 100%;
+}
+
+.menu {
+    line-height: 32px;
+    flex-grow: 1;
+    text-align: right;
+}
+
+main {
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.note {
+    font-size: .9em;
+    margin-top: 7px;
+    color: #666;
+}
+
+.note code {
+    font-weight: bold;
+}
+
+.error-note {
+    color: red;
+}
+
+select {
+    display: inline-block;
+    padding: .275rem 2rem .275rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.3;
+    color: #495057;
+    vertical-align: middle;
+    background: #fff url"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e" no-repeat right .75rem center/8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    font-size: .90em;
+}
+
+.typeselect {
+    margin-left: 10px;
+}
+
+.legend .right {
+    flex-grow: 1;
+    text-align: right;
+}
+
+.legend {
+    font-size: 1.2em;
+    color: #444;
+    border-radius: 3px;
+    margin: 0 0 5px;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    line-height: 2em;
+}
+
+.legend label {
+    font-weight: normal;
+    font-size: .90em;
+}
+
+.content {
+    font-size: 1.3em;
+    font-family: monospace;
+    border: solid 1px #673AB7;
+}
+
+.code-editor .content,
+.context-editor .content {
+    overflow: hidden;
+}
+
+.tree .content {
+    overflow: auto;
+    padding: 4px;
+    min-width: 200px;
+}
+
+.output .content {
+    white-space: pre-wrap;
+    font-family: monospace;
+    padding: 4px;
+    overflow: auto;
+}
+
+.CodeMirror {
+    height: 100%;
+}
+
+.highlight-container .CodeMirror-code {
+    color: #708;
+}
+
+.mark-comment {
+    color: #a50;
+}
+
+.mark-selection {
+    background: bisque;
+}
+
+.mark-parameters,
+.mark-context,
+.mark-list,
+.mark-interval {
+    color: rgb67, 79, 84;
+}
+
+.mark-string {
+    color: #a11;
+}
+
+.mark-builtin {
+    color: #30a;
+}
+
+.mark-number {
+    color: #164;
+}
+
+.mark-boolean {
+    color: #219;
+}
+
+.mark-qname {
+    color: #05a;
+}
+
+.mark-name {
+    color: #05a;
+}
+
+.mark-error {
+    text-decoration: underline;
+    color: red;
+}
+
+.mark-error-before {
+    position: relative;
+}
+
+.mark-error-before:before {
+    position: absolute;
+    z-index: 300;
+    content: '\200B';
+    border-left: dotted 1px red;
+    margin-left: -1px;
+}
+
+.mark-error-after {
+    position: relative;
+}
+
+.mark-error-after:after {
+    position: absolute;
+    z-index: 300;
+    content: '\200B';
+    border-right: dotted 1px red;
+    margin-right: -1px;
+}
+
+ol {
+    list-style: none;
+    counter-reset: mycounter;
+    padding: 0;
+}
+
+ol li {
+    position: relative;
+    padding: 5px 0;
+    margin: 50px;
+}
+
+ol li:before {
+    content: counter(mycounter);
+    counter-increment: mycounter;
+    position: absolute;
+    top: 0;
+    left: -50px;
+    width: 35px;
+    height: 35px;
+    line-height: 35px;
+    border-radius: 10%;
+    color: #fff;
+    background: orange;
+    text-align: center;
+}

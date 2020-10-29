@@ -1,0 +1,9 @@
+{
+  "name": "lezer-editor",
+  "short_name": "lezer-editor",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff",
+  "theme_color": "#673ab8"
+}
