@@ -28,12 +28,8 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   const tag = tags[0]
 
   const [state, setState] = useState<State>({
-    expression: `Immo
-  price
-    > 250k
-    < 300k
-`,
-    contextString: JSON.stringify({ Immo: { price: 260 } }, null, 2),
+    expression: `x = 'Hello world'\nprint(x)`,
+    contextString: JSON.stringify({ person: { name: 'John', surname: 'Doe' } }, null, 2),
     syntaxHighlight: true,
     grammarTags: grammar.getEditorInfo().getGrammarTags(),
     grammarTag: tag,
@@ -297,6 +293,9 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
 
     try {
       let output = evaluate(grammar, grammarTag, expression, context);
+      if (!output) {
+        throw Error(`Cannot evaluate expression: ${expression}.`);
+      }
       _(s => ({ output: output, outputError: null }));
     } catch (err) {
       console.error(err);
@@ -464,7 +463,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
 
               <div className="content">{state.output && JSON.stringify(state.output) || ''}</div>
 
-              <div className="note">
+              <div className="note err">
                 {state.outputError && (
                   <div>Evaluation failed: { state.outputError.message}</div>
                 )}

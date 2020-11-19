@@ -1,6 +1,7 @@
 import { IGrammar, IInterpreter } from '@lezer-editor/lezer-editor-common';
 import { Tree } from 'lezer';
 import { default as parse } from './parser';
+import jsext from '../jsext'
 
 class GrammarExecutor {
   constructor(private grammar: IGrammar) {
@@ -26,7 +27,7 @@ class GrammarExecutor {
           }
 
           if (node.isError) {
-            throw new Error(`Statement unparseable at [${start}, ${end}] for ${input}`);
+            throw SyntaxError(`Statement unparseable at [${start}, ${end}] for ${input}`);
           }
 
           const nodeInput = input.slice(start, end);
@@ -57,7 +58,7 @@ class GrammarExecutor {
         }
       });
     } catch (e) {
-      console.log('err = ' + e);
+      throw Error(`Execution tree building failed. ${jsext.toStr({grammarTag, tree, input})}`);
     }
 
     return root.args[root.args.length - 1];
@@ -65,18 +66,22 @@ class GrammarExecutor {
 
   evaluate(grammarTag: string, expression: string, context: Record<string, any> = {}) {
 
-    const {
-      tree: parseTree,
-      parsedContext
-    } = parse(this.grammar, grammarTag, expression, context);
+    try {
+      const {
+        tree: parseTree,
+        parsedContext
+      } = parse(this.grammar, grammarTag, expression, context);
 
-    const root = this._buildExecutionTree(grammarTag, parseTree, expression);
-    const results = root(parsedContext);
+      const root = this._buildExecutionTree(grammarTag, parseTree, expression);
+      const results = root(parsedContext);
 
-    if (results.length === 1) {
-      return results[0];
-    } else {
-      return results;
+      if (results.length === 1) {
+        return results[0];
+      } else {
+        return results;
+      }
+    } catch (e) {
+      throw Error(`Evaluate failed: ${JSON.stringify({grammarTag, expression, context})}`)
     }
   }
 

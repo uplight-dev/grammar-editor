@@ -358,6 +358,13 @@ main {
     font-weight: bold;
 }
 
+.note.err {
+    color:red;
+    font-size: small;
+    font-weight: bold;
+    font-style: italic;
+}
+
 .error-note {
     color: red;
 }

@@ -1,5 +1,6 @@
 import {IGrammar} from '@lezer-editor/lezer-editor-common';
 import { ParseOptions, Tree } from 'lezer';
+import jsext from './../jsext'
 
 type NameDefinition = {
   name: string,
@@ -16,9 +17,6 @@ type ParseResult = {
 };
 
 
-/**
- * A feel parser for a specific grammar (expressions)
- */
 class Parser {
   constructor() {
 
@@ -41,7 +39,7 @@ class Parser {
     try {
       tree = grammar.LezerParser.parse(parsedInput, parseOptions);
     } catch (e) {
-      console.log('error parsing: ' + parsedInput);
+      throw Error(`Error parsing. ${jsext.toStr({rawInput, rawContext, parseOptions})}`)
     }
 
     return {
