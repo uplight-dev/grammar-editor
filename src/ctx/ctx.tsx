@@ -4,7 +4,7 @@ import GrammarLoader from '../util/grammarloader/grammarloader';
 import store from 'store'
 
 export const DEMO_GITHUB_URL = 'https://github.com/lezer-editor/lezer-example-grammar';
-const DEMO_DEPLOY_URL = 'https://unpkg.com/@lezer-editor/lezer-example-grammar@1.0.0/dist';
+const DEMO_DEPLOY_URL = 'https://cdn.jsdelivr.net/npm/@lezer-editor/lezer-example-grammar@1.0.1/dist';
 const DEMO_REPLIT_URL = 'https://repl.it/@lezereditor/lezer-example-grammar';
 
 const Store = createStore({
