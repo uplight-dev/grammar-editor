@@ -8,7 +8,9 @@ import Home from "./grammarinspector";
 import GrammarEditor from "./grammareditor";
 import TabListExt from './tablistext';
 import GrammarComponent from "./grammarinspector";
-import icon from '../assets/icons/lezer.png';
+
+
+const icon = require('../assets/icons/lezer.png');
 
 const App: FunctionalComponent = () => {
     // let currentUrl: string;

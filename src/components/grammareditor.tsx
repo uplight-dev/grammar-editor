@@ -44,7 +44,7 @@ const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
           <RepoSelect style={{ width: '1000px' }} ref={refRepos} popupManager={popupManager} 
             repos={storeState.repos} repoIdx={storeState.repoIdx}
             onSelect={onSelect} onEdit={onEdit} onNew={onNew} />
-          <Button onClick={() => {if (refRepos.current) refRepos.current.editRepo()}}>Edit</Button>
+          <Button onClick={() => {if (refRepos.current) refRepos.current.editRepo(null)}}>Edit</Button>
           {/* <Button className="red">Reload Grammar</Button>
           <Button className="orange">Deploy on Repl.it</Button> */}
       </div>

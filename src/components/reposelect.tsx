@@ -11,7 +11,7 @@ const OPT_FORK = "fork";
 const GITHUB_URL_RX = /https?:\/\/(www\.)?github.com\/\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
 
 export interface Handles {
-    editRepo() : void
+    editRepo(repo : Repo) : void
 }
 
 //code style: https://www.robinwieruch.de/react-function-component
