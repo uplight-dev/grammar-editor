@@ -4,22 +4,15 @@ import Modal from 'react-modal';
 import { PopupProvider } from 'react-popup-manager';
 import { Tab, TabPanel, Tabs } from 'react-tabs';
 import { useStore } from "../ctx/ctx";
-import Home from "./grammarinspector";
 import GrammarEditor from "./grammareditor";
 import TabListExt from './tablistext';
 import GrammarComponent from "./grammarinspector";
-
-
-const icon = require('../assets/icons/lezer.png');
+import icon from '../assets/icons/lezer.png'
 
 const App: FunctionalComponent = () => {
     // let currentUrl: string;
     let [grammarShown, setGrammarShown] = useState(false);
     const [storeState, storeActions] = useStore();
-
-    // const handleRoute = (e: RouterOnChangeArgs) => {
-    //     currentUrl = e.url;
-    // };
 
     useEffect(() => {
         Modal.setAppElement('#app')
@@ -56,11 +49,6 @@ const App: FunctionalComponent = () => {
                             )}
                         </TabPanel>
                     </Tabs>
-                    {/* <Router onChange={handleRoute}>
-                        <Route path="/" component={Home} />
-                        <Route path="/grammar" component={GrammarEditor}  />
-                        <NotFoundPage default />
-                    </Router> */}
                 </div>
             </div>
         </PopupProvider>
