@@ -20,9 +20,9 @@ export default class TabListExt extends Component {
     const { title, children, className, ...attributes } = this.props;
 
     return (
-      <div className="react-tabs__title-wrapper">
-        <span className="react-tabs__title">{title || ''}</span>
-        <ul {...attributes} className={cx(className)} role="tablist">
+      <div className="react-tabs__title-wrapper hcontainer" style={{width:'100%'}}>
+        <span className="react-tabs__title" style={{width:'100%'}}>{title || ''}</span>
+        <ul {...attributes} className={cx(className)} role="tablist" style={{whiteSpace: 'nowrap'}}>
             {children}
         </ul>
       </div>

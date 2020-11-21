@@ -171,6 +171,7 @@ body {
 .button-bar {
     display: grid;
     grid-template-columns: auto auto auto auto;
+    gap: 2px;
     padding: 10px;
 }
 

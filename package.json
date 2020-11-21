@@ -5,7 +5,7 @@
     "license": "MIT",
     "author": "upslash-dev <upslash.dev@gmail.com>",
     "scripts": {
-        "build": "preact build --no-prerender",
+        "build": "preact build --no-prerender #due to issue with including codemirror",
         "serve": "sirv build --port 8080 --cors --single",
         "dev": "preact watch",
         "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
@@ -33,6 +33,7 @@
         "preact-render-to-string": "^5.1.4",
         "preact-router": "^3.2.1",
         "react-modal": "^3.11.2",
+        "react-notify-toast": "^0.5.1",
         "react-popup-manager": "^2.0.28",
         "react-sweet-state": "^2.4.4",
         "react-tabs": "^3.1.1",

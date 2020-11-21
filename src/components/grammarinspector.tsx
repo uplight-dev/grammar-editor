@@ -9,9 +9,12 @@ import { Stack } from 'stack-typescript';
 import { Node, TreeNode } from './treenode';
 import { evaluate, parse } from '../util/index';
 import jsext from '../util/jsext';
+import { useStore } from '../ctx/ctx';
 
-const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) => {
-  if (!grammar) {
+const GrammarInspector: FunctionalComponent<any> = () => {
+  const [storeState, storeActions] = useStore();
+
+  if (!storeState.grammar) {
     return (<div>Loading ...</div>);
   }
 
@@ -20,7 +23,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   const grammarTagSelect: Ref<HTMLSelectElement> = useRef();
 
 
-  const tags = grammar.getEditorInfo().getGrammarTags();
+  const tags = storeState.grammar.getEditorInfo().getGrammarTags();
   if (!tags || tags.length == 0) {
     alert('Invalid grammar provided!')
     throw "Invalid grammar provided!";
@@ -28,10 +31,8 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   const tag = tags[0]
 
   const [state, setState] = useState<State>({
-    expression: `x = 'Hello world'\nprint(x)`,
-    contextString: JSON.stringify({ person: { name: 'John', surname: 'Doe' } }, null, 2),
     syntaxHighlight: true,
-    grammarTags: grammar.getEditorInfo().getGrammarTags(),
+    grammarTags: storeState.grammar.getEditorInfo().getGrammarTags(),
     grammarTag: tag,
     treeRoot: new Node(tag, 0, 0, []),
     treeSelection: null,
@@ -70,18 +71,11 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   function mapParamsToState(params: Record<string, string>) {
     _(s => {
       return entries(params).reduce((p, [k, v]) => {
-        return jsext.toMap(k, v || s[k]);
+        let r = v || s[k];
+        console.log(`mapParamsToState: ${jsext.toStr({k,r})}`);
+        return jsext.toMap(k, r);
       }, {});
     })
-  }
-
-  function serializeHash(expression: string, contextString: string, syntaxHighlight: boolean, grammarTag: string) {
-    console.log('serializeHash');
-    if (typeof window !== 'undefined') {
-      window.location.hash = '#' + [expression, contextString, syntaxHighlight, grammarTag].filter(v => {
-        return v && v !== '';
-      }).map(encodeURIComponent).join(';');
-    }
   }
 
   function mark(editor: CodeMirror.Editor, node: Node, className?: string): CMMark {
@@ -216,7 +210,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
     const {
       tree,
       parsedInput
-    } = parse(grammar, grammarTag, expression, rawContext);
+    } = parse(storeState.grammar, grammarTag, expression, rawContext);
 
     let txt = '';
 
@@ -245,7 +239,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
             skip
           };
 
-          stack.push(new Node(name, start, end, [], grammar.getEditorInfo().getTokenType(node)!));
+          stack.push(new Node(name, start, end, [], storeState.grammar.getEditorInfo().getTokenType(node)!));
 
         },
 
@@ -292,7 +286,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
     context = context || {};
 
     try {
-      let output = evaluate(grammar, grammarTag, expression, context);
+      let output = evaluate(storeState.grammar, grammarTag, expression, context);
       if (!output) {
         throw Error(`Cannot evaluate expression: ${expression}.`);
       }
@@ -310,8 +304,6 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   //
 
   useEffect(() => {
-    const params = mapParamsToState(parseParams());
-
     let codeEditor = CodeMirror.fromTextArea(codeEditorElement.current, {
       lineNumbers: true,
       mode: null
@@ -338,10 +330,6 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
 
     //=========================
 
-    parseContext(state.contextString);
-
-    serializeHash(state.expression, state.contextString, state.syntaxHighlight, state.grammarTag);
-
     return () => {
       codeEditor.toTextArea();
       contextEditor.toTextArea();
@@ -350,7 +338,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   }, []);
 
   useEffect(() => {
-    evaluateExpression(state.grammarTag, state.expression, state.context);
+    evaluateExpression(state.grammarTag, storeState.expression, state.context);
     renderSyntax(state.codeEditor, state.treeTokens);
 
     return () => {
@@ -359,7 +347,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   }, [state.treeRoot])
 
   useEffect(() => {
-    evaluateExpression(state.grammarTag, state.expression, state.context);
+    evaluateExpression(state.grammarTag, storeState.expression, state.context);
 
     return () => {
       evaluateExpression.cancel();
@@ -375,27 +363,15 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   }, [state.treeSelection]);
 
   useEffect(() => {
-    if (state.expression == undefined) {
+    if (storeState.expression == undefined) {
       return;
     }
-    updateStack(state.grammarTag, state.expression, state.context, state.syntaxHighlight);
-    evaluateExpression(state.grammarTag, state.expression, state.context);
-    serializeHash(state.expression, state.contextString, state.syntaxHighlight, state.grammarTag);
-
-    return () => {
-      updateStack.cancel();
-      evaluateExpression.cancel();
-    }
-  }, [state.expression]);
-
-  useEffect(() => {
-    state.expression !== undefined && updateStack(state.grammarTag, state.expression, state.context, state.syntaxHighlight);
-    serializeHash(state.expression, state.contextString, state.syntaxHighlight, state.grammarTag);
+    updateStack(state.grammarTag, storeState.expression, state.context, state.syntaxHighlight);
 
     return () => {
       updateStack.cancel();
     }
-  }, [state.grammarTag])
+  }, [storeState.expression, storeState.contextStr, state.grammarTag]);
 
   useEffect(() => {
     let markEl = state.oldSelectionMark;
@@ -407,18 +383,17 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
   }, [state.selectionMark])
 
   useEffect(() => {
-    console.log('grammar changed!')
-    updateStack(state.grammarTag, state.expression, state.context, state.syntaxHighlight);
-    evaluateExpression(state.grammarTag, state.expression, state.context);
-    state.grammarTags = grammar.getEditorInfo().getGrammarTags();
-  }, [grammar])
+    console.log('Grammar changed!')
+    updateStack(state.grammarTag, storeState.expression, state.context, state.syntaxHighlight);
+    state.grammarTags = storeState.grammar.getEditorInfo().getGrammarTags();
+  }, [storeState.grammar])
 
   return (
     <div style={{height: '100%', padding: '20px'}}>
 
       <div className="hcontainer flex-vcenter" style={{ height: '30px'}}>
         <label>
-          Root Grammar Node
+          Root
           <select className="typeselect" name="grammarTag" ref={grammarTagSelect} value={state.grammarTag} onChange={(e: Event) => _(s => ({ grammarTag: (e.target as HTMLSelectElement).value }))}>
             {state?.grammarTags?.map((tag) => {
               return (<option value={tag}>{tag}</option>);
@@ -433,7 +408,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
         <div className="vcontainer" style="flex: .6">
           <div className="container code-editor">
             <div className="content" onMouseMove={handleEditorOver.bind(this)}>
-              <textarea name="expression" ref={codeEditorElement} value={state.expression}></textarea>
+              <textarea name="expression" ref={codeEditorElement} value={storeState.expression}></textarea>
             </div>
 
           </div>
@@ -444,7 +419,7 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
               <h3 className="legend">Input</h3>
 
               <div className="content">
-                <textarea name="contextString" ref={contextEditorElement} value={state.contextString}></textarea>
+                <textarea name="contextString" ref={contextEditorElement} value={storeState.contextStr}></textarea>
               </div>
 
               <div className="note">
@@ -485,8 +460,8 @@ const GrammarInspector: FunctionalComponent<{grammar: IGrammar}> = ({grammar}) =
 };
 
 interface State {
-  expression: string;
-  contextString: string;
+  // expression: string;
+  // contextString: string;
   syntaxHighlight: boolean;
   grammarTag: string;
   grammarTags: string[];

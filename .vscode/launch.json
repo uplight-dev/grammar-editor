@@ -10,7 +10,7 @@
             "name": "Launch Chrome against localhost",
             "url": "http://localhost:8080",
             "runtimeExecutable": "/usr/bin/brave-browser-stable",
-            "webRoot": "${workspaceFolder}/src"
+            "webRoot": "${cwd}/src"
         },
         {
             "name": "Attach",

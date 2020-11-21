@@ -1,10 +1,9 @@
 import { FunctionalComponent, h, Ref } from "preact";
-import { useContext, useRef } from "preact/hooks";
+import { useRef } from "preact/hooks";
 import { withPopups } from "react-popup-manager";
-import Button from './button';
-import RepoSelect, { Repo } from './reposelect';
-import {Handles as RepoSelectHandles} from './reposelect';
 import { useStore } from "../ctx/ctx";
+import Button from './button';
+import RepoSelect, { Handles as RepoSelectHandles, Repo } from './reposelect';
 
 
 const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
@@ -45,8 +44,6 @@ const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
             repos={storeState.repos} repoIdx={storeState.repoIdx}
             onSelect={onSelect} onEdit={onEdit} onNew={onNew} />
           <Button onClick={() => {if (refRepos.current) refRepos.current.editRepo(null)}}>Edit</Button>
-          {/* <Button className="red">Reload Grammar</Button>
-          <Button className="orange">Deploy on Repl.it</Button> */}
       </div>
       {storeState.repos[storeState.repoIdx].replitUrl && (<iframe height="100%" width="100%" 
           src={storeState.repos[storeState.repoIdx].replitUrl + '?lite=true'} scrolling="no" frameBorder={0} allowTransparency={true} allowFullScreen={true} sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-modals"></iframe>
