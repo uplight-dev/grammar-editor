@@ -83,7 +83,7 @@ const Header = ({popupManager}) => {
 
         return (
             <Modal isOpen={isOpen} onRequestClose={onClose} className="Modal" overlayClassName="Overlay">
-                <div style={{width: '400px', height: '400px'}}>
+                <div style={{width: '800px', height: '400px'}}>
                     <textarea ref={txtRef} value={storeState.shareStr} style={{width: '100%', height: 'calc(100% - 50px)'}}></textarea>
                     <div className="button-bar" style={{height: '50px'}}>
                         <Button onClick={(e) => {storeActions.import(txtRef.current.value); onClose();}}>Import</Button>
