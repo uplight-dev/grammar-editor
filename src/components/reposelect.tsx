@@ -92,7 +92,7 @@ const RepoSelect: ForwardFn<{
             return;
         }
         const r = new Repo(repoURL, null);
-        //console.log('new repo: ' + JSON.stringify(r));
+        console.log('new repo: ' + JSON.stringify(r));
         onNew(r)
         setState(s => ({ ...s, adding: false }))
         after && after(r);

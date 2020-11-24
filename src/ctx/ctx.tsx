@@ -1,8 +1,8 @@
 import { createHook, createStore } from 'react-sweet-state';
+import store from 'store';
 import { Repo } from '../components/reposelect';
 import GrammarLoader from '../util/grammarloader/grammarloader';
-import store from 'store'
-import dump from 'store/plugins/dump';
+import jsext from '../util/jsext';
 
 export const DEMO_GITHUB_URL = 'https://github.com/lezer-editor/lezer-example-grammar';
 const DEMO_DEPLOY_URL = 'https://cdn.jsdelivr.net/npm/@lezer-editor/lezer-example-grammar@1.0.1/dist';
@@ -12,6 +12,7 @@ function storedState(state: any) {
     return {
         expression: state.expression,
         contextStr: state.contextStr,
+        grammarTag: state.grammarTag,
         repos: state.repos,
         repoIdx: state.repoIdx,
     }
@@ -24,20 +25,39 @@ function mergeData(state, data) {
 }
 
 async function localStorageReload({setState, getState}) {
-    let dataStr = store.get('dataStr');
+    let dataObj = store.get('dataStr');
     let data = null;
     let state = {...getState()}
 
-    if (dataStr && typeof dataStr === 'string'){
-        data = JSON.parse(dataStr);
+    console.log(`localStorageReload: ${jsext.toStr(dataObj)}`)
+    if (dataObj){
+        if (typeof dataObj === 'string') {
+            data = JSON.parse(dataObj);
+        } else {
+            data = dataObj;
+        }
         state = mergeData(state, data);
     }
 
-    const grammar = await getState().grammarLoader.load(state.repos[state.repoIdx].deployUrl);
+    await grammarUrlChanged(state.repos[state.repoIdx].deployUrl, setState, () => state);
+}
+
+async function grammarUrlChanged(grammarUrl, setState, getState) {
+    const grammar = await getState().grammarLoader.load(grammarUrl);
+    
+    grammarChanged(grammar, setState, getState)
+}
+
+function grammarChanged(grammar, setState, getState) {
+    const state = getState();
+    const tags = [...grammar.getEditorInfo().getGrammarTags()];
+
     setState({
         ...getState(),
         ...state,
-        grammar
+        grammar,
+        grammarTags: tags,
+        grammarTag: tags?.length > 0 && tags[0]
     })
 }
 
@@ -47,10 +67,8 @@ const actions = {
     },
 
     setGrammar: (grammar) => ({setState, getState}) => {
-        setState({
-            ...getState(),
-            grammar: grammar
-        })
+        const state = getState();
+        grammarChanged(grammar, setState, () => state);
     },
 
     setRepos: (repos) => ({setState, getState, dispatch}) => {
@@ -92,23 +110,6 @@ const actions = {
         });
     },
 
-    // notify: (notifyObj: {txt: string, type?: string}) => ({setState, getState}) => {
-    //     setState({
-    //         ...getState(),
-    //         notifyQueue: [...getState().notifyQueue, notifyObj]
-    //     });
-    // },
-
-    // popNotify: (cb: (notifyObj) => void) => ({setState, getState}) => {
-    //     let queue = [...getState().notifyQueue];
-    //     let ret = queue.splice(0, 1)
-    //     setState({
-    //         ...getState(),
-    //         notifyQueue: queue
-    //     });
-    //     cb(ret);
-    // },
-
     import: (dataStr) => (props:{setState, getState}) => {
         try {
             let data = JSON.parse(dataStr);
@@ -139,6 +140,8 @@ const Store = createStore({
         expression: 'var1 = "hello world";\nprint(var1)',
         contextStr: JSON.stringify({person: {name: 'John', surname: 'Doe'}}),
         grammar: null,
+        grammarTag: null,
+        grammarTags: [],
         grammarLoader: new GrammarLoader(),
         repos: [new Repo(DEMO_GITHUB_URL, DEMO_DEPLOY_URL, DEMO_REPLIT_URL)],
         repoIdx: 0,

@@ -81,7 +81,7 @@ class GrammarExecutor {
         return results;
       }
     } catch (e) {
-      throw Error(`Evaluate failed: ${JSON.stringify({grammarTag, expression, context})}`)
+      throw Error(`Evaluate failed: ${JSON.stringify({grammarTag, expression, context, e})}`)
     }
   }
 

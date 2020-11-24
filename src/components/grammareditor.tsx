@@ -14,7 +14,6 @@ const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
 
   const onNew = (repo: Repo) => {
     const newRepos = [repo, ...storeState.repos];
-    console.table(newRepos)
     storeActions.setRepos(newRepos)
     storeActions.setRepoIdx(0);
   }
@@ -32,7 +31,6 @@ const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
     console.log({repo, idx})
     const newRepos = [...storeState.repos];
     newRepos[idx] = repo;
-    console.log(newRepos);
     storeActions.setRepos(newRepos)
   }
 
@@ -44,6 +42,7 @@ const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
             repos={storeState.repos} repoIdx={storeState.repoIdx}
             onSelect={onSelect} onEdit={onEdit} onNew={onNew} />
           <Button onClick={() => {if (refRepos.current) refRepos.current.editRepo(null)}}>Edit</Button>
+          <Button onClick={async () => {await onSelect(storeState.repoIdx)}}>Reload</Button>
       </div>
       {storeState.repos[storeState.repoIdx].replitUrl && (<iframe height="100%" width="100%" 
           src={storeState.repos[storeState.repoIdx].replitUrl + '?lite=true'} scrolling="no" frameBorder={0} allowTransparency={true} allowFullScreen={true} sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-modals"></iframe>

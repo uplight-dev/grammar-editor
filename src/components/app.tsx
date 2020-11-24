@@ -37,7 +37,6 @@ const App: FunctionalComponent<any> = ({popupManager}) => {
             <Notifications options={{timeout: 2000, animationDuration: 100}} />
             <div style={{ height: '100%' }}>
                 <Tabs forceRenderTabPanel={true} onSelect={(idx) => {
-                    console.log('IDX='+idx)
                     if (!grammarShown && idx == 1) {
                         setGrammarShown(true);
                     }
@@ -100,7 +99,7 @@ const Header = ({popupManager}) => {
             href={storeState.repos[storeState.repoIdx].repoUrl}>{storeState.repos[storeState.repoIdx].repoUrl}
         </a>
         <div style={{marginLeft:'auto', marginRight: '10px'}}>
-            <Button className="orange" onClick={() => {
+            <Button onClick={() => {
                 popupManager.open(ImportPopup);
             }
             }>Import</Button>
