@@ -9,7 +9,7 @@ export interface INode {
   children: Node[],
   tokenType?: string,
   skip?: boolean,
-  error?: boolean,
+  error?: string,
   prop(v: string): string;
 }
 
