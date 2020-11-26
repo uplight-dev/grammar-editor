@@ -233,7 +233,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
     _(s => {
       let r : any = { treeRoot: stack.top.children[stack.top.children.length - 1], treeTokens: tokens};
-      if (firstErr) r = {...r, outputError: firstErr};
+      r = {...r, outputError: firstErr};
       return r;
     })
 
@@ -441,10 +441,10 @@ const GrammarInspector: FunctionalComponent<any> = () => {
         <div data-gs-id="grid-outputErr" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="0" data-gs-y="9" data-gs-width="6" data-gs-height="2" >
           <div className="grid-stack-item-content vcontainer">
           {!state.outputError && (
-            <div>Evaluation errors: None</div>
+            <div>Errors: None</div>
           )}
           {state.outputError && (
-            <div className="err">Evaluation errors: { state.outputError}</div>
+            <div className="err">Errors: { state.outputError}</div>
           )}
           </div>
         </div>

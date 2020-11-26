@@ -5,7 +5,7 @@
     "license": "MIT",
     "author": "upslash-dev <upslash.dev@gmail.com>",
     "scripts": {
-        "build": "preact build --no-prerender #due to issue with including codemirror",
+        "build": "preact build --no-prerender #no-prerender due to issue with including codemirror",
         "serve": "sirv build --port 8080 --cors --single",
         "dev": "preact watch",
         "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
