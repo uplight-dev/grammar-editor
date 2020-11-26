@@ -9,7 +9,7 @@ export interface INode {
   children: Node[],
   tokenType?: string,
   skip?: boolean,
-  error?: string,
+  error?: boolean,
   prop(v: string): string;
 }
 
@@ -21,7 +21,7 @@ export class Node implements INode {
     public children: Node[],
     public tokenType?: string,
     public skip?: boolean,
-    public error?: string,
+    public error?: string
   ) {
 
   }

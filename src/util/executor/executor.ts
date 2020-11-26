@@ -18,70 +18,61 @@ class GrammarExecutor {
     
     const self = this;
 
-    try {
-      tree.iterate({
-        enter(node, start, end) {
+    tree.iterate({
+      enter(node, start, end) {
 
-          if (node.isSkipped) {
-            return false;
-          }
+        // if (node.isError) {
+        //   throw SyntaxError(`Statement unparseable at [${start}, ${end}] for ${input}`);
+        // }
 
-          if (node.isError) {
-            throw SyntaxError(`Statement unparseable at [${start}, ${end}] for ${input}`);
-          }
-
-          const nodeInput = input.slice(start, end);
-
-          stack.push({
-            nodeInput,
-            args: []
-          });
-        },
-
-        leave(node, start, end) {
-
-          if (node.isSkipped) {
-            return;
-          }
-
-          const {
-            nodeInput,
-            args
-          } = stack.pop() as StackEntry;
-
-          const parent = stack[stack.length - 1];
-
-          const interpreter: IInterpreter = self.grammar.getEditorInfo().getInterpreter(grammarTag);
-          const expr = interpreter.evaluate(node, nodeInput, args);
-
-          parent.args.push(expr);
+        if (node.isSkipped) {
+          return false;
         }
-      });
-    } catch (e) {
-      throw Error(`Execution tree building failed. ${jsext.toStr({grammarTag, tree, input})}`);
-    }
+
+        const nodeInput = input.slice(start, end);
+
+        stack.push({
+          nodeInput,
+          args: []
+        });
+      },
+
+      leave(node, start, end) {
+
+        if (node.isSkipped) {
+          return;
+        }
+
+        const {
+          nodeInput,
+          args
+        } = stack.pop() as StackEntry;
+
+        const parent = stack[stack.length - 1];
+
+        const interpreter: IInterpreter = self.grammar.getEditorInfo().getInterpreter(grammarTag);
+        const expr = interpreter.evaluate(node, nodeInput, args);
+
+        parent.args.push(expr);
+      }
+    });
 
     return root.args[root.args.length - 1];
   }
 
   evaluate(grammarTag: string, expression: string, context: Record<string, any> = {}) {
+    const {
+      tree: parseTree,
+      parsedContext
+    } = parse(this.grammar, grammarTag, expression, context);
 
-    try {
-      const {
-        tree: parseTree,
-        parsedContext
-      } = parse(this.grammar, grammarTag, expression, context);
+    const root = this._buildExecutionTree(grammarTag, parseTree, expression);
+    const results = root(parsedContext);
 
-      const root = this._buildExecutionTree(grammarTag, parseTree, expression);
-      const results = root(parsedContext);
-
-      if (results.length === 1) {
-        return results[0];
-      } else {
-        return results;
-      }
-    } catch (e) {
-      throw Error(`Evaluate failed: ${JSON.stringify({grammarTag, expression, context, e})}`)
+    if (results.length === 1) {
+      return results[0];
+    } else {
+      return results;
     }
   }
 

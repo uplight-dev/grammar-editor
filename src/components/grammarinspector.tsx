@@ -1,6 +1,6 @@
 import * as CodeMirror from 'codemirror';
 import { NodeType } from 'lezer';
-import { debounce } from 'lodash-es';
+import { debounce, first } from 'lodash-es';
 import { FunctionalComponent, h } from "preact";
 import { Ref, useRef, useState, useEffect } from "preact/hooks";
 import { Stack } from 'stack-typescript';
@@ -115,12 +115,17 @@ const GrammarInspector: FunctionalComponent<any> = () => {
   const renderSelection = debounce(function renderSelection(editor: CodeMirror.Editor, node: Node | null) {
     //console.time('renderSelection');
     let markEl;
+    let s0 = {};
 
     if (node && editor) {
       markEl = mark(editor, node, 'selection');
+
+      if (node.error) {
+        s0 = {outputError : node.error};
+      }
     }
 
-    _(s => ({selectionMark: markEl}));
+    _(s => ({...s0, selectionMark: markEl}));
 
     //console.timeEnd('renderSelection');
   })
@@ -179,15 +184,12 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     stack.push(new Node('', 0, 0, []));
 
     const tokens: Node[] = [];
+    let firstErr = null;
 
     const {
       tree,
       parsedInput
     } = parse(storeState.grammar, grammarTag, expression, rawContext);
-
-    let txt = '';
-
-    let indent = 0;
 
     if (tree != null) {
       tree.iterate({
@@ -197,22 +199,16 @@ const GrammarInspector: FunctionalComponent<any> = () => {
             name
           } = node;
 
-          const parent = stack.tail;
+          const input = parsedInput.slice(start, end);
 
-          const skip = name === parsedInput.slice(start, end);
+          const error = node.isError ? `Statement unparseable at [${start}, ${end}] for '${input}'` : null;
+          if (error && !firstErr) {
+            firstErr = error;
+          }
 
-          const error = node.isError
+          const n = new Node(name, start, end, [], storeState.grammar.getEditorInfo().getTokenType(node)!, node.isSkipped, error);
 
-          const _node = {
-            name,
-            start,
-            end,
-            children: [],
-            error,
-            skip
-          };
-
-          stack.push(new Node(name, start, end, [], storeState.grammar.getEditorInfo().getTokenType(node)!));
+          stack.push(n);
 
         },
 
@@ -220,9 +216,9 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
           const current = stack.pop();
 
-          if (current.skip) {
-            return;
-          }
+          // if (current.skip) {
+          //   return;
+          // }
 
           const parent = stack.top;
 
@@ -235,7 +231,11 @@ const GrammarInspector: FunctionalComponent<any> = () => {
       });
     }
 
-    _(s => ({ treeRoot: stack.top.children[stack.top.children.length - 1], treeTokens: tokens }))
+    _(s => {
+      let r : any = { treeRoot: stack.top.children[stack.top.children.length - 1], treeTokens: tokens};
+      if (firstErr) r = {...r, outputError: firstErr};
+      return r;
+    })
 
     console.timeEnd('updateStack');
   }, 300);
@@ -263,10 +263,10 @@ const GrammarInspector: FunctionalComponent<any> = () => {
       if (!output) {
         throw Error(`Cannot evaluate expression: ${expression}.`);
       }
-      _(s => ({ output: output, outputError: null }));
+      _(s => ({ output: output }));
     } catch (err) {
       console.error(err);
-      _(s => ({ output: null, outputError: err }));
+      _(s => ({ output: null }));
     }
   }, 300);
 
@@ -299,6 +299,9 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
   useEffect(() => {
     const grid = GridStack.init({column: 12, minRow: 1, cellHeight: 64, disableOneColumnMode: false, animate: false, staticGrid: true});
+    if (storeState && storeState.layout) {
+      grid.load(storeState.layout);
+    }
     _(s => ({grid: grid}));
 
     grid.on('change', () => onLayoutChange(grid));
@@ -441,7 +444,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
             <div>Evaluation errors: None</div>
           )}
           {state.outputError && (
-            <div>Evaluation errors: { state.outputError.message}</div>
+            <div className="err">Evaluation errors: { state.outputError}</div>
           )}
           </div>
         </div>

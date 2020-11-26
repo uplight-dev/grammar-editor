@@ -158,7 +158,52 @@ const Store = createStore({
         repos: [new Repo(DEMO_GITHUB_URL, DEMO_DEPLOY_URL, DEMO_REPLIT_URL)],
         repoIdx: 0,
         notifyShow: (...args) => {console.warn('Notify not inited yet ...')},
-        layout: []
+        layout: [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 1,
+              "minWidth": 3,
+              "maxHeight": 1,
+              "id": "grid-cfg"
+            },
+            {
+              "x": 0,
+              "y": 1,
+              "width": 6,
+              "height": 9,
+              "id": "grid-codeEditor"
+            },
+            {
+              "x": 6,
+              "y": 1,
+              "width": 6,
+              "height": 11,
+              "id": "grid-tree"
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "width": 6,
+              "height": 4,
+              "id": "grid-context"
+            },
+            {
+              "x": 6,
+              "y": 12,
+              "width": 3,
+              "height": 2,
+              "id": "grid-output"
+            },
+            {
+              "x": 9,
+              "y": 12,
+              "width": 3,
+              "height": 2,
+              "id": "grid-outputErr"
+            }
+          ]
     },
     actions,
     name: 'store'
