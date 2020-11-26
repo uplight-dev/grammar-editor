@@ -380,8 +380,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     <div style={{overflowX:'hidden', overflowY: 'auto', height: '100%'}}>
     <div class="grid-stack" style={{width:'100%'}}>
 
-        <div data-gs-id="grid-cfg" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="0" data-gs-y="0" data-gs-width="12" data-gs-height="1" 
-        data-gs-max-height="1" data-gs-min-width="3">
+        <div data-gs-id="grid-cfg" className={"grid-stack-item content " + state.layoutingClassName}>
           <div className="grid-stack-item-content flex-vcenter hcontainer">
             <label>
               Root
@@ -402,20 +401,20 @@ const GrammarInspector: FunctionalComponent<any> = () => {
           </div>
         </div>
 
-        <div data-gs-id="grid-codeEditor" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="0" data-gs-y="1" data-gs-width="6" data-gs-height="6" >
+        <div data-gs-id="grid-codeEditor" className={"grid-stack-item content " + state.layoutingClassName} >
           <div className="grid-stack-item-content">
             <CodeMirrorExt ref={codeEditor} value={storeState.expression} onChange={updateExpression} onEditorOver={handleEditorOver}
               opts={{lineNumbers: true, mode: null}}></CodeMirrorExt>
           </div>
         </div>
 
-        <div data-gs-id="grid-tree" className={"grid-stack-item content " + state.layoutingClassName} data-gs-y="1" data-gs-width="6" data-gs-height="10">
+        <div data-gs-id="grid-tree" className={"grid-stack-item content " + state.layoutingClassName}>
           <div className="grid-stack-item-content">
             <TreeNode node={state.treeRoot} onSelect={selectExpression} selection={state.treeSelection} />
           </div>
         </div>
 
-        <div data-gs-id="grid-context" className={"grid-stack-item context-editor content " + state.layoutingClassName} data-gs-x="0" data-gs-y="7" data-gs-width="3" data-gs-height="2" >
+        <div data-gs-id="grid-context" className={"grid-stack-item context-editor content " + state.layoutingClassName}>
           <div className="grid-stack-item-content vcontainer">
             <h3 className="input-label legend">Input</h3>
             <CodeMirrorExt ref={contextEditor} value={storeState.contextStr} onChange={updateContext}
@@ -431,14 +430,14 @@ const GrammarInspector: FunctionalComponent<any> = () => {
           </div>
         </div>
                 
-        <div data-gs-id="grid-output" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="3" data-gs-y="7" data-gs-width="3" data-gs-height="2">
+        <div data-gs-id="grid-output" className={"grid-stack-item content " + state.layoutingClassName}>
           <div className="grid-stack-item-content">
             <h3 className="output-label">Output</h3>
             <div className="output-result">{state.output && JSON.stringify(state.output) || ''}</div>
           </div>
         </div>
 
-        <div data-gs-id="grid-outputErr" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="0" data-gs-y="9" data-gs-width="6" data-gs-height="2" >
+        <div data-gs-id="grid-outputErr" className={"grid-stack-item content " + state.layoutingClassName}>
           <div className="grid-stack-item-content vcontainer">
           {!state.outputError && (
             <div>Errors: None</div>

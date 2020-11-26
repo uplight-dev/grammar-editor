@@ -172,7 +172,7 @@ const Store = createStore({
               "x": 0,
               "y": 1,
               "width": 6,
-              "height": 9,
+              "height": 2,
               "id": "grid-codeEditor"
             },
             {
@@ -184,22 +184,22 @@ const Store = createStore({
             },
             {
               "x": 0,
-              "y": 10,
+              "y": 3,
               "width": 6,
-              "height": 4,
+              "height": 11,
               "id": "grid-context"
             },
             {
               "x": 6,
               "y": 12,
-              "width": 3,
+              "width": 2,
               "height": 2,
               "id": "grid-output"
             },
             {
-              "x": 9,
+              "x": 8,
               "y": 12,
-              "width": 3,
+              "width": 4,
               "height": 2,
               "id": "grid-outputErr"
             }
