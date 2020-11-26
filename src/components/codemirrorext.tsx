@@ -40,7 +40,7 @@ const CodeMirrorExt = forwardRef((props: {opts?, value?, onChange?, onEditorOver
     }, [cm])
     
     return (
-        <div className="content" onMouseMove={(e) => {onEditorOver && cm && onEditorOver(cm, e)}}>
+        <div className="cm-content" onMouseMove={(e) => {onEditorOver && cm && onEditorOver(cm, e)}}>
             <textarea name="expression" ref={elRef} value={value}></textarea>
         </div>
     )

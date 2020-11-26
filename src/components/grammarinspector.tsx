@@ -2,13 +2,15 @@ import * as CodeMirror from 'codemirror';
 import { NodeType } from 'lezer';
 import { debounce } from 'lodash-es';
 import { FunctionalComponent, h } from "preact";
-import { Ref, useRef, useState } from "preact/hooks";
-import { useEffect } from "react";
+import { Ref, useRef, useState, useEffect } from "preact/hooks";
 import { Stack } from 'stack-typescript';
 import { useStore } from '../ctx/ctx';
 import { evaluate, parse } from '../util/index';
 import CodeMirrorExt from './codemirrorext';
 import { Node, TreeNode } from './treenode';
+import {GridStack} from 'gridstack';
+import 'gridstack/dist/gridstack.min.css';
+import Toggle from 'react-toggle'
 
 const GrammarInspector: FunctionalComponent<any> = () => {
   const [storeState, storeActions] = useStore();
@@ -21,6 +23,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
   const contextEditor = useRef<CodeMirror.Editor>(null);
   const grammarTagSelect: Ref<HTMLSelectElement> = useRef();
 
+  let layoutSaving = false;
 
   const tags = storeState.grammar.getEditorInfo().getGrammarTags();
   if (!tags || tags.length == 0) {
@@ -39,11 +42,17 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     syntaxMarks : [],
     oldSelectionMark: null,
     selectionMark: null,
-    context : null
+    grid: null,
+    layouting: false,
+    layoutingClassName: '',
+    layoutSaving: false
     });
 
   function _(fn: (s: State) => any) {
-    setState(s => ({ ...s, ...fn(s) } as State));
+    setState(s => {
+      const newState = ({ ...s, ...fn(s) } as State);
+      return newState;
+    });
   }
 
   function mark(editor: CodeMirror.Editor, node: Node, className?: string): CMMark {
@@ -269,6 +278,19 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     storeActions.setContextStr(val)
   };
 
+  const onLayoutChange = (grid) => {
+    console.log('Layout changed!')
+    if (!grid) {
+      return;
+    }
+    _(s => ({layoutSaving : true}));
+    const layout = grid.save(false);
+    storeActions.setLayout(layout)
+    setTimeout(() => {
+      _(s => ({layoutSaving : false}));
+    }, 500);
+  }
+
   //
   //
   // ============================================================== EFFECTS
@@ -276,11 +298,30 @@ const GrammarInspector: FunctionalComponent<any> = () => {
   //
 
   useEffect(() => {
+    const grid = GridStack.init({column: 12, minRow: 1, cellHeight: 64, disableOneColumnMode: false, animate: false, staticGrid: true});
+    _(s => ({grid: grid}));
 
+    grid.on('change', () => onLayoutChange(grid));
   }, []);
 
   useEffect(() => {
-    evaluateExpression(storeState.grammarTag, storeState.expression, state.context);
+    if (state.grid)
+      state.grid.setStatic(!state.layouting);
+  }, [state.layouting]);
+
+  useEffect(() => {
+    if (state.grid && storeState.layout) {
+      if (state.layoutSaving) {
+        console.log('grid not reloaded: layout saving is in progress')
+      } else {
+        console.log('grid reloaded')
+        state.grid.load(storeState.layout);
+      }
+    }
+  }, [storeState.layout]);
+
+  useEffect(() => {
+    evaluateExpression(storeState.grammarTag, storeState.expression, storeState.contextStr);
     codeEditor && renderSyntax(codeEditor?.current, state.treeTokens);
 
     return () => {
@@ -289,12 +330,14 @@ const GrammarInspector: FunctionalComponent<any> = () => {
   }, [state.treeRoot])
 
   useEffect(() => {
-    evaluateExpression(storeState.grammarTag, storeState.expression, state.context);
+    evaluateExpression(storeState.grammarTag, storeState.expression, storeState.contextStr);
+    parseContext(storeState.contextStr)
 
     return () => {
       evaluateExpression.cancel();
+      parseContext.cancel();
     }
-  }, [state.context])
+  }, [storeState.contextStr])
 
   useEffect(() => {
     codeEditor && renderSelection(codeEditor?.current, state.treeSelection);
@@ -309,7 +352,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     if (storeState.expression == undefined) {
       return;
     }
-    updateStack(storeState.grammarTag, storeState.expression, state.context, state.syntaxHighlight);
+    updateStack(storeState.grammarTag, storeState.expression, storeState.contextStr, state.syntaxHighlight);
 
     return () => {
       updateStack.cancel();
@@ -327,74 +370,84 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
   useEffect(() => {
     console.log('Grammar changed!')
-    updateStack(storeState.grammarTag, storeState.expression, state.context, state.syntaxHighlight);
+    updateStack(storeState.grammarTag, storeState.expression, storeState.contextStr, state.syntaxHighlight);
   }, [storeState.grammar])
 
   return (
-    <div style={{height: '100%', padding: '20px'}}>
+    <div style={{overflowX:'hidden', overflowY: 'auto', height: '100%'}}>
+    <div class="grid-stack" style={{width:'100%'}}>
 
-      <div className="hcontainer flex-vcenter" style={{ height: '30px'}}>
-        <label>
-          Root
-          <select className="typeselect" name="grammarTag" ref={grammarTagSelect} value={storeState.grammarTag} onChange={(e: Event) => _(s => ({ grammarTag: (e.target as HTMLSelectElement).value }))}>
-            {storeState?.grammarTags?.map((tag) => {
-              return (<option value={tag}>{tag}</option>);
-            }
-            )};
-          </select>
-        </label>
-      </div>
+        <div data-gs-id="grid-cfg" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="0" data-gs-y="0" data-gs-width="12" data-gs-height="1" 
+        data-gs-max-height="1" data-gs-min-width="3">
+          <div className="grid-stack-item-content flex-vcenter hcontainer">
+            <label>
+              Root
+              <select className="typeselect" name="grammarTag" ref={grammarTagSelect} value={storeState.grammarTag} onChange={(e: Event) => _(s => ({ grammarTag: (e.target as HTMLSelectElement).value }))}>
+                {storeState?.grammarTags?.map((tag) => {
+                  return (<option value={tag}>{tag}</option>);
+                }
+                )};
+              </select>
+            </label>
 
-      <div className="hcontainer" style={{height: 'calc(100% - 60px)'}}>
+            <Toggle
+              id="layouting-toggle"
+              checked={state.layouting}
+              onChange={() => {_(s => ({layouting: !s.layouting, layoutingClassName: !s.layouting ? 'layouting': ''}))}} />
+            <label htmlFor='layouting-toggle'>{state.layouting ? "Editable Layout" : "Static Layout"}</label>
 
-        <div className="vcontainer" style="flex: .6">
-          <div className="container code-editor">
-            <CodeMirrorExt ref={codeEditor} value={storeState.expression} onChange={updateExpression} onEditorOver={handleEditorOver}
-              opts={{lineNumbers: true, mode: null}}></CodeMirrorExt>
-          </div>
-
-          <div className="hcontainer">
-            <div className="container context-editor">
-
-              <h3 className="legend">Input</h3>
-
-              <CodeMirrorExt ref={contextEditor} value={storeState.contextStr} onChange={updateContext}
-                opts={{mode: { name: 'javascript', json: true }, theme: 'default'}}></CodeMirrorExt>
-
-              <div className="note">
-                {state.contextParseError && (
-                  <div>Failed to parse as JSON.</div>
-                )}
-                {!state.contextParseError && (
-                  <div>Enter JSON object literal.</div>
-                )}
-              </div>
-            </div>
-
-            <div className="container output">
-
-              <h3 className="legend">Output</h3>
-
-              <div className="content">{state.output && JSON.stringify(state.output) || ''}</div>
-
-              <div className="note err">
-                {state.outputError && (
-                  <div>Evaluation failed: { state.outputError.message}</div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
-        <div className="container tree" style="flex: .4">
-          <div className="content">
+        <div data-gs-id="grid-codeEditor" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="0" data-gs-y="1" data-gs-width="6" data-gs-height="6" >
+          <div className="grid-stack-item-content">
+            <CodeMirrorExt ref={codeEditor} value={storeState.expression} onChange={updateExpression} onEditorOver={handleEditorOver}
+              opts={{lineNumbers: true, mode: null}}></CodeMirrorExt>
+          </div>
+        </div>
+
+        <div data-gs-id="grid-tree" className={"grid-stack-item content " + state.layoutingClassName} data-gs-y="1" data-gs-width="6" data-gs-height="10">
+          <div className="grid-stack-item-content">
             <TreeNode node={state.treeRoot} onSelect={selectExpression} selection={state.treeSelection} />
           </div>
         </div>
 
-      </div>
+        <div data-gs-id="grid-context" className={"grid-stack-item context-editor content " + state.layoutingClassName} data-gs-x="0" data-gs-y="7" data-gs-width="3" data-gs-height="2" >
+          <div className="grid-stack-item-content vcontainer">
+            <h3 className="input-label legend">Input</h3>
+            <CodeMirrorExt ref={contextEditor} value={storeState.contextStr} onChange={updateContext}
+              opts={{mode: { name: 'javascript', json: true }, theme: 'default'}}></CodeMirrorExt>
+            <div>
+              {state.contextParseError && (
+                <div>Failed to parse as JSON.</div>
+              )}
+              {!state.contextParseError && (
+                <div>JSON parsed OK</div>
+              )}
+            </div>
+          </div>
+        </div>
+                
+        <div data-gs-id="grid-output" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="3" data-gs-y="7" data-gs-width="3" data-gs-height="2">
+          <div className="grid-stack-item-content">
+            <h3 className="output-label">Output</h3>
+            <div className="output-result">{state.output && JSON.stringify(state.output) || ''}</div>
+          </div>
+        </div>
 
-    </div>
+        <div data-gs-id="grid-outputErr" className={"grid-stack-item content " + state.layoutingClassName} data-gs-x="0" data-gs-y="9" data-gs-width="6" data-gs-height="2" >
+          <div className="grid-stack-item-content vcontainer">
+          {!state.outputError && (
+            <div>Evaluation errors: None</div>
+          )}
+          {state.outputError && (
+            <div>Evaluation errors: { state.outputError.message}</div>
+          )}
+          </div>
+        </div>
+
+      </div>
+      </div>
   );
 };
 
@@ -409,7 +462,10 @@ interface State {
   syntaxMarks : CMMark[];
   oldSelectionMark: CMMark;
   selectionMark: CMMark;
-  context : any;
+  grid: any;
+  layouting: boolean;
+  layoutingClassName: string;
+  layoutSaving: boolean;
 }
 
 interface CMMark {

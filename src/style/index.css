@@ -2,6 +2,7 @@ html,
 body {
     height: 100%;
     width: 100%;
+    line-height: normal !important;
     padding: 0;
     margin: 0;
     background: #FAFAFA;
@@ -28,6 +29,98 @@ body {
 .title a {
     font-weight: normal;
     font-size: small;
+}
+
+.CodeMirror {
+    height: 100%;
+}
+
+.highlight-container .CodeMirror-code {
+    color: #708;
+}
+
+
+/* INSPECT GRID */
+.vcontainer {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 
+.grid-stack-item[data-gs-width="2"]  { width: 50% !important; }
+.grid-stack-item[data-gs-width="1"]  { width: 50% !important; }
+
+.grid-stack-item[data-gs-x="2"]  { left: 50% !important }
+.grid-stack-item[data-gs-x="1"]  { left: 50% !important } */
+
+
+/* .inspectGrid {
+    display: grid;
+    grid-template: 50px 1fr 50px 1fr 50px 100px / repeat(2, 50%);
+    height: 100%;
+    margin: 10px;
+}
+
+.inspectGrid .tag-selector {
+    grid-column: 1 / span 2;
+    align-self: center;
+}
+
+.inspectGrid .code-editor {
+    grid-row-start: 2;
+}
+
+.inspectGrid .tree {
+    height: 100%;
+}
+
+.inspectGrid .input-label {
+    grid-row-start: 3;
+    grid-column-start: 1;
+}
+
+.inspectGrid .context-editor {
+    grid-row-start: 4;
+}
+
+.inspectGrid .note {
+    grid-row-start: 5;
+}
+
+.inspectGrid .output-label {
+    grid-row-start: 5;
+    grid-column-start: 2;
+}
+
+.inspectGrid .output-result {
+    grid-row: 3 / span 2;
+    grid-column-start: 2;
+}
+
+.inspectGrid .err {
+
+} */
+
+.cm-content {
+    width: 100%;
+    height: 100%;
+}
+
+.content {
+    font-size: 0.9em;
+    font-family: monospace;
+    border: 1px solid lightgrey;
+}
+
+.output .content {
+    white-space: pre-wrap;
+    font-family: monospace;
+    padding: 4px;
+    overflow: auto;
+}
+
+.layouting {
+    border: 1px dashed peru;
 }
 
 /* GRID */
@@ -91,7 +184,7 @@ body {
 
 .react-tabs {
     -webkit-tap-highlight-color: transparent;
-    height: 90%;
+    height: 100%;
 }
 
 .react-tabs__title-wrapper {
@@ -169,20 +262,11 @@ body {
 /* BUTTONS */
 
 .button-bar {
-    display: grid;
-    grid-template-columns: auto auto auto auto;
-    gap: 2px;
-    padding: 10px;
-}
-
-.button-bar button:nth-child(1) {
-    grid-column-start: 4;
-    grid-column-end: 4;
-}
-
-.button-bar button:nth-child(2) {
-    grid-column-start: 3;
-    grid-column-end: 3;
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 15px;
+    flex-wrap: nowrap;
+    align-items: center;
 }
 
 button {
@@ -279,24 +363,11 @@ button.red:active {
 
 .hcontainer {
     flex-direction: row;
-    gap: 2px;
+    gap: 5px;
 }
 
 .flex-vcenter {
     align-items: center;
-}
-
-.container {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-    margin: 20px 0 0px 0;
-}
-
-.container .content {
-    flex: 1;
-    align-self: stretch;
 }
 
 input.repo-url {
@@ -306,6 +377,10 @@ input.repo-url {
 .CodeMirror {
     height: 100%;
     z-index: 0;
+}
+
+.CodeMirror-vscrollbar {
+    overflow-y: auto !important;
 }
 
 header {
@@ -357,11 +432,9 @@ main {
     font-weight: bold;
 }
 
-.note.err {
+.err {
     color:red;
     font-size: small;
-    font-weight: bold;
-    font-style: italic;
 }
 
 .error-note {
@@ -376,7 +449,7 @@ select {
     line-height: 1.3;
     color: #495057;
     vertical-align: middle;
-    background: #fff url"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e" no-repeat right .75rem center/8px 10px;
+    background: #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right .75rem center/8px 10px;
     border: 1px solid #ced4da;
     border-radius: .25rem;
     -webkit-appearance: none;
@@ -387,59 +460,6 @@ select {
 
 .typeselect {
     margin-left: 10px;
-}
-
-.legend .right {
-    flex-grow: 1;
-    text-align: right;
-}
-
-.legend {
-    font-size: 1.2em;
-    color: #444;
-    border-radius: 3px;
-    margin: 0 0 5px;
-    display: flex;
-    align-items: center;
-    padding: 0;
-    line-height: 2em;
-}
-
-.legend label {
-    font-weight: normal;
-    font-size: .90em;
-}
-
-.content {
-    font-size: 1.3em;
-    font-family: monospace;
-    border: solid 1px #673AB7;
-}
-
-.code-editor .content,
-.context-editor .content {
-    overflow: hidden;
-}
-
-.tree .content {
-    overflow: auto;
-    padding: 4px;
-    min-width: 200px;
-}
-
-.output .content {
-    white-space: pre-wrap;
-    font-family: monospace;
-    padding: 4px;
-    overflow: auto;
-}
-
-.CodeMirror {
-    height: 100%;
-}
-
-.highlight-container .CodeMirror-code {
-    color: #708;
 }
 
 .mark-comment {

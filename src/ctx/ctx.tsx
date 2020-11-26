@@ -15,6 +15,7 @@ function storedState(state: any) {
         grammarTag: state.grammarTag,
         repos: state.repos,
         repoIdx: state.repoIdx,
+        layout: state.layout
     }
 }
 
@@ -103,6 +104,14 @@ const actions = {
         dispatch(actions.stateToStorage())
     },
 
+    setLayout: (layout) => ({setState, getState, dispatch}) => {
+        setState({
+            ...getState(),
+            layout
+        });
+        dispatch(actions.stateToStorage())
+    },
+
     setNotifyShow: (notifyShow) => ({setState, getState}) => {
         setState({
             ...getState(),
@@ -110,10 +119,13 @@ const actions = {
         });
     },
 
-    import: (dataStr) => (props:{setState, getState}) => {
+    import: (dataStr, includeLayout) => (props:{setState, getState}) => {
         try {
             let data = JSON.parse(dataStr);
             data = storedState(data);
+            if (!includeLayout) {
+                data.layout = null;
+            }
             localStorage.setItem('dataStr', JSON.stringify(data))
             localStorageReload(props)
             props.getState().notifyShow('Import successfull', 'success')
@@ -145,7 +157,8 @@ const Store = createStore({
         grammarLoader: new GrammarLoader(),
         repos: [new Repo(DEMO_GITHUB_URL, DEMO_DEPLOY_URL, DEMO_REPLIT_URL)],
         repoIdx: 0,
-        notifyShow: (...args) => {console.warn('Notify not inited yet ...')}
+        notifyShow: (...args) => {console.warn('Notify not inited yet ...')},
+        layout: []
     },
     actions,
     name: 'store'

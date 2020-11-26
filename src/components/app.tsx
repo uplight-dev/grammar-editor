@@ -11,6 +11,8 @@ import icon from '../assets/icons/lezer.png'
 import Button from "./button";
 import Notifications, {notify} from 'react-notify-toast';
 import jsext from "../util/jsext";
+import "react-toggle/style.css"
+import Toggle from 'react-toggle'
 
 const App: FunctionalComponent<any> = ({popupManager}) => {
     // let currentUrl: string;
@@ -47,6 +49,7 @@ const App: FunctionalComponent<any> = ({popupManager}) => {
                         <Tab>Grammar</Tab>
                     </TabListExt>
 
+                    <div style={{height: 'calc(100% - 30px)'}}>
                     <TabPanel>
                         <GrammarComponent></GrammarComponent>
                     </TabPanel>
@@ -55,6 +58,7 @@ const App: FunctionalComponent<any> = ({popupManager}) => {
                             <GrammarEditor></GrammarEditor>
                         )}
                     </TabPanel>
+                    </div>
                 </Tabs>
             </div>
         </div>
@@ -73,7 +77,7 @@ const Header = ({popupManager}) => {
 
     const ImportPopup = ({isOpen, onClose}) => {
         const txtRef = useRef<HTMLTextAreaElement>();
-        const [state, setState] = useState({notifyShow: null})
+        const [includeLayout, setIncludeLayout] = useState(false)
 
         useEffect(() => {
             if (txtRef.current)
@@ -85,7 +89,12 @@ const Header = ({popupManager}) => {
                 <div style={{width: '800px', height: '400px'}}>
                     <textarea ref={txtRef} value={storeState.shareStr} style={{width: '100%', height: 'calc(100% - 50px)'}}></textarea>
                     <div className="button-bar" style={{height: '50px'}}>
-                        <Button onClick={(e) => {storeActions.import(txtRef.current.value); onClose();}}>Import</Button>
+                        <Button style={{width: '100px'}} onClick={(e) => {storeActions.import(txtRef.current.value, includeLayout); onClose();}}>Import</Button>
+                        <Toggle
+                                id="include-layout"
+                                checked={includeLayout}
+                                onChange={() => {setIncludeLayout(!includeLayout)}} />
+                        <label htmlFor='include-layout'>{includeLayout ? "Include Layout" : "Exclude Layout"}</label>
                     </div>
                 </div>
             </Modal>
