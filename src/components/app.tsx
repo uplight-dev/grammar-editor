@@ -104,7 +104,7 @@ const Header = ({popupManager}) => {
     return (<span className="title hcontainer flex-vcenter" style={{gap: 5, width:'100%'}}>
         <img src={icon} style={{width:32, height:32}} />
         <span>Lezer Editor </span>
-        <a target="_blank" 
+        <a target="_blank" className="grammar-url"
             href={storeState.repos[storeState.repoIdx].repoUrl}>{storeState.repos[storeState.repoIdx].repoUrl}
         </a>
         <div style={{marginLeft:'auto', marginRight: '10px'}}>

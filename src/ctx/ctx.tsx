@@ -8,6 +8,53 @@ export const DEMO_GITHUB_URL = 'https://github.com/lezer-editor/lezer-example-gr
 const DEMO_DEPLOY_URL = 'https://cdn.jsdelivr.net/npm/@lezer-editor/lezer-example-grammar@1.0.1/dist';
 const DEMO_REPLIT_URL = 'https://repl.it/@lezereditor/lezer-example-grammar';
 
+export const DEF_LAYOUT = [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 1,
+      "minWidth": 3,
+      "maxHeight": 1,
+      "id": "grid-cfg"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "width": 6,
+      "height": 2,
+      "id": "grid-codeEditor"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "width": 6,
+      "height": 11,
+      "id": "grid-tree"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "width": 6,
+      "height": 11,
+      "id": "grid-context"
+    },
+    {
+      "x": 6,
+      "y": 12,
+      "width": 2,
+      "height": 2,
+      "id": "grid-output"
+    },
+    {
+      "x": 8,
+      "y": 12,
+      "width": 4,
+      "height": 2,
+      "id": "grid-outputErr"
+    }
+  ];
+
 function storedState(state: any) {
     return {
         expression: state.expression,
@@ -158,52 +205,7 @@ const Store = createStore({
         repos: [new Repo(DEMO_GITHUB_URL, DEMO_DEPLOY_URL, DEMO_REPLIT_URL)],
         repoIdx: 0,
         notifyShow: (...args) => {console.warn('Notify not inited yet ...')},
-        layout: [
-            {
-              "x": 0,
-              "y": 0,
-              "width": 12,
-              "height": 1,
-              "minWidth": 3,
-              "maxHeight": 1,
-              "id": "grid-cfg"
-            },
-            {
-              "x": 0,
-              "y": 1,
-              "width": 6,
-              "height": 2,
-              "id": "grid-codeEditor"
-            },
-            {
-              "x": 6,
-              "y": 1,
-              "width": 6,
-              "height": 11,
-              "id": "grid-tree"
-            },
-            {
-              "x": 0,
-              "y": 3,
-              "width": 6,
-              "height": 11,
-              "id": "grid-context"
-            },
-            {
-              "x": 6,
-              "y": 12,
-              "width": 2,
-              "height": 2,
-              "id": "grid-output"
-            },
-            {
-              "x": 8,
-              "y": 12,
-              "width": 4,
-              "height": 2,
-              "id": "grid-outputErr"
-            }
-          ]
+        layout: DEF_LAYOUT
     },
     actions,
     name: 'store'

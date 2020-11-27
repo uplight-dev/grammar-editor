@@ -4,13 +4,14 @@ import { debounce, first } from 'lodash-es';
 import { FunctionalComponent, h } from "preact";
 import { Ref, useRef, useState, useEffect } from "preact/hooks";
 import { Stack } from 'stack-typescript';
-import { useStore } from '../ctx/ctx';
+import { DEF_LAYOUT, useStore } from '../ctx/ctx';
 import { evaluate, parse } from '../util/index';
 import CodeMirrorExt from './codemirrorext';
 import { Node, TreeNode } from './treenode';
 import {GridStack} from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
 import Toggle from 'react-toggle'
+import Button from './button';
 
 const GrammarInspector: FunctionalComponent<any> = () => {
   const [storeState, storeActions] = useStore();
@@ -381,9 +382,9 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     <div class="grid-stack" style={{width:'100%'}}>
 
         <div data-gs-id="grid-cfg" className={"grid-stack-item content " + state.layoutingClassName}>
-          <div className="grid-stack-item-content flex-vcenter hcontainer">
+          <div className="grid-stack-item-content flex-vcenter hcontainer toolbar">
             <label>
-              Root
+              Root Node
               <select className="typeselect" name="grammarTag" ref={grammarTagSelect} value={storeState.grammarTag} onChange={(e: Event) => _(s => ({ grammarTag: (e.target as HTMLSelectElement).value }))}>
                 {storeState?.grammarTags?.map((tag) => {
                   return (<option value={tag}>{tag}</option>);
@@ -392,11 +393,16 @@ const GrammarInspector: FunctionalComponent<any> = () => {
               </select>
             </label>
 
-            <Toggle
-              id="layouting-toggle"
-              checked={state.layouting}
-              onChange={() => {_(s => ({layouting: !s.layouting, layoutingClassName: !s.layouting ? 'layouting': ''}))}} />
-            <label htmlFor='layouting-toggle'>{state.layouting ? "Editable Layout" : "Static Layout"}</label>
+            <label>Layout: </label>
+
+            <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', border: '1px solid grey', padding: '5px'}}>
+              <Toggle
+                id="layouting-toggle"
+                checked={state.layouting}
+                onChange={() => {_(s => ({layouting: !s.layouting, layoutingClassName: !s.layouting ? 'layouting': ''}))}} />
+              <label htmlFor='layouting-toggle'>{state.layouting ? "Editable" : "Static"}</label>
+              <Button className="orange" onClick={() => {storeActions.setLayout(DEF_LAYOUT)}}>Reset</Button>
+            </div>
 
           </div>
         </div>
@@ -416,35 +422,40 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
         <div data-gs-id="grid-context" className={"grid-stack-item context-editor content " + state.layoutingClassName}>
           <div className="grid-stack-item-content vcontainer">
-            <h3 className="input-label legend">Input</h3>
+            <h3 className="input-label caption">Input</h3>
             <CodeMirrorExt ref={contextEditor} value={storeState.contextStr} onChange={updateContext}
               opts={{mode: { name: 'javascript', json: true }, theme: 'default'}}></CodeMirrorExt>
-            <div>
-              {state.contextParseError && (
-                <div>Failed to parse as JSON.</div>
-              )}
-              {!state.contextParseError && (
-                <div>JSON parsed OK</div>
-              )}
+            <div className="info-block hcontainer" style={{minHeight: '50px', alignItems: 'center'}}>
+              <span>
+                {state.contextParseError && (
+                  <div className="err">JSON parsing failed. Please check your input.</div>
+                )}
+                {!state.contextParseError && (
+                  <div>JSON parsed OK</div>
+                )}
+              </span>
             </div>
           </div>
         </div>
                 
         <div data-gs-id="grid-output" className={"grid-stack-item content " + state.layoutingClassName}>
           <div className="grid-stack-item-content">
-            <h3 className="output-label">Output</h3>
-            <div className="output-result">{state.output && JSON.stringify(state.output) || ''}</div>
+            <h3 className="output-label caption">Output</h3>
+            <div className="output-result info-block">{state.output && JSON.stringify(state.output) || ''}</div>
           </div>
         </div>
 
         <div data-gs-id="grid-outputErr" className={"grid-stack-item content " + state.layoutingClassName}>
-          <div className="grid-stack-item-content vcontainer">
-          {!state.outputError && (
-            <div>Errors: None</div>
-          )}
-          {state.outputError && (
-            <div className="err">Errors: { state.outputError}</div>
-          )}
+          <div className="grid-stack-item-content">
+            <h3 className="output-label caption">Errors</h3>
+            <div className="grid-stack-item-content info-block">
+              {!state.outputError && (
+                <div>None</div>
+              )}
+              {state.outputError && (
+                <div className="err">{ state.outputError}</div>
+              )}
+            </div>
           </div>
         </div>
 
