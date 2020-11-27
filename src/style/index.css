@@ -5,7 +5,7 @@ body {
     line-height: normal !important;
     padding: 0;
     margin: 0;
-    background: #FFFFCC;
+    background: #FFFFEE;
     font-family: 'Helvetica Neue', arial, sans-serif;
     font-weight: 400;
     color: #444;
@@ -166,14 +166,14 @@ body {
 
 .react-tabs__tab {
     display: inline-block;
-    background: lightgoldenrodyellow;
-    color: mediumblue;
+    background: rgb(255, 253, 232);
+    color: lightgrey;
     border: 1px solid transparent;
     border-bottom: none;
     bottom: -1px;
     position: relative;
     list-style: none;
-    padding: 5px 5px;
+    padding: 10px 10px;
     cursor: pointer;
     font-size: 12px;
 }
@@ -423,6 +423,7 @@ select {
 
 .mark-selection {
     background: bisque;
+    cursor: pointer;
 }
 
 .mark-parameters,

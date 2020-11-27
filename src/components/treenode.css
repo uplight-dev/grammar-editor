@@ -8,6 +8,7 @@ color: steelblue;
 
 .selected .description {
 background: bisque;
+cursor: pointer;
 }
 
 .error {
