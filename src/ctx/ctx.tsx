@@ -157,6 +157,7 @@ const actions = {
             layout
         });
         dispatch(actions.stateToStorage())
+        getState().notifyShow('Layout saved!', 'success')
     },
 
     setNotifyShow: (notifyShow) => ({setState, getState}) => {

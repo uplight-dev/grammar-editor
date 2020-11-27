@@ -401,7 +401,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
                 checked={state.layouting}
                 onChange={() => {_(s => ({layouting: !s.layouting, layoutingClassName: !s.layouting ? 'layouting': ''}))}} />
               <label htmlFor='layouting-toggle'>{state.layouting ? "Editable" : "Static"}</label>
-              <Button className="orange" onClick={() => {storeActions.setLayout(DEF_LAYOUT)}}>Reset</Button>
+              <Button className="orange" onClick={() => {storeState.notifyShow('Layout resetted!', 'success');storeActions.setLayout(DEF_LAYOUT);}}>Reset</Button>
             </div>
 
           </div>
