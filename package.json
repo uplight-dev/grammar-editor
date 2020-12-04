@@ -26,6 +26,7 @@
         "codemirror": "^5.58.2",
         "gridstack": "^2.2.0",
         "lodash-es": "^4.17.15",
+        "node-json-transform": "^1.1.1",
         "path": "^0.12.7",
         "preact": "^10.5.7",
         "preact-jsx-chai": "^3.0.0",

@@ -1,8 +1,10 @@
 import { createHook, createStore } from 'react-sweet-state';
 import store from 'store';
 import { Repo } from '../components/reposelect';
-import GrammarLoader from '../util/grammarloader/grammarloader';
+import GrammarLoader from '../util/parserplugin/loader';
 import jsext from '../util/jsext';
+import { ParserPlugin } from '../util';
+import { OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
 
 export const DEMO_GITHUB_URL = 'https://github.com/lezer-editor/lezer-example-grammar';
 const DEMO_DEPLOY_URL = 'https://cdn.jsdelivr.net/npm/@lezer-editor/lezer-example-grammar@1.0.1/dist';
@@ -96,9 +98,9 @@ async function grammarUrlChanged(grammarUrl, setState, getState) {
     grammarChanged(grammar, setState, getState)
 }
 
-function grammarChanged(grammar, setState, getState) {
-    const state = getState();
-    const tags = [...grammar.getEditorInfo().getGrammarTags()];
+function grammarChanged(grammar : ParserPlugin, setState : (StoreType) => void, getState : () => StoreType) {
+    const state = getState() as StoreType;
+    const tags = [...grammar.getOption(OPTION_ROOT_TAGS)];
 
     setState({
         ...getState(),
@@ -114,7 +116,7 @@ const actions = {
         localStorageReload(props);
     },
 
-    setGrammar: (grammar) => ({setState, getState}) => {
+    setGrammar: (grammar : ParserPlugin) => ({setState, getState}) => {
         const state = getState();
         grammarChanged(grammar, setState, () => state);
     },
@@ -207,9 +209,23 @@ const Store = createStore({
         repoIdx: 0,
         notifyShow: (...args) => {console.warn('Notify not inited yet ...')},
         layout: DEF_LAYOUT
-    },
+    } as StoreType,
     actions,
     name: 'store'
 });
+
+interface StoreType {
+    shareStr: string,
+    expression: string,
+    contextStr: string,
+    grammar: ParserPlugin
+    grammarTag: string,
+    grammarTags: string[],
+    grammarLoader: GrammarLoader,
+    repos: Repo[],
+    repoIdx: number,
+    notifyShow: (...args : any) => void,
+    layout: []
+}
 
 export const useStore = createHook(Store);

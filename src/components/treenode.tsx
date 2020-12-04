@@ -1,41 +1,11 @@
+import { ASTNode } from "@lezer-editor/lezer-editor-common";
 import { FunctionalComponent, h } from "preact";
 import { useRef } from "react";
 import * as style from "./treenode.css";
-
-export interface INode {
-  name: string,
-  start: number,
-  end: number,
-  children: Node[],
-  tokenType?: string,
-  skip?: boolean,
-  error?: string,
-  prop(v: string): string;
-}
-
-export class Node implements INode {
-  constructor(
-    public name: string,
-    public start: number,
-    public end: number,
-    public children: Node[],
-    public tokenType?: string,
-    public skip?: boolean,
-    public error?: string
-  ) {
-
-  }
-
-  prop(v: string): string {
-    throw new Error("Not callable.");
-  }
-
-}
-
 export interface Props {
-  node: Node;
+  node: ASTNode;
   onSelect: Function;
-  selection?: Node;
+  selection?: ASTNode;
 }
 
 export const TreeNode: FunctionalComponent<Props> = ({ node, onSelect, selection }: Props) => {
@@ -71,7 +41,7 @@ export const TreeNode: FunctionalComponent<Props> = ({ node, onSelect, selection
 
       {node.children.length > 0 && (
         <div class={style.children}>
-          {node.children.map((child: Node) => {
+          {node.children.map((child: ASTNode) => {
             //console.log('xxx=' + child.name);
             return (
               <div>

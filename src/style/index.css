@@ -32,6 +32,15 @@ body {
     font-size: 12px;
 }
 
+.option-set {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px; 
+    border: 1px solid #dddddd;
+    padding: 5px;
+}
+
 .caption {
     font-size: 16px;
     font-weight: bold;

@@ -5,13 +5,13 @@ import { FunctionalComponent, h } from "preact";
 import { Ref, useRef, useState, useEffect } from "preact/hooks";
 import { Stack } from 'stack-typescript';
 import { DEF_LAYOUT, useStore } from '../ctx/ctx';
-import { evaluate, parse } from '../util/index';
 import CodeMirrorExt from './codemirrorext';
-import { Node, TreeNode } from './treenode';
+import { TreeNode } from './treenode';
 import {GridStack} from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
 import Toggle from 'react-toggle'
 import Button from './button';
+import { ASTNode, ASTNodeImpl, OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
 
 const GrammarInspector: FunctionalComponent<any> = () => {
   const [storeState, storeActions] = useStore();
@@ -24,9 +24,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
   const contextEditor = useRef<CodeMirror.Editor>(null);
   const grammarTagSelect: Ref<HTMLSelectElement> = useRef();
 
-  let layoutSaving = false;
-
-  const tags = storeState.grammar.getEditorInfo().getGrammarTags();
+  const tags = storeState.grammar.getOption(OPTION_ROOT_TAGS);
   if (!tags || tags.length == 0) {
     alert('Invalid grammar provided!')
     throw "Invalid grammar provided!";
@@ -34,7 +32,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
   const [state, setState] = useState<State>({
     syntaxHighlight: true,
-    treeRoot: new Node(storeState.grammarTag, 0, 0, []),
+    treeRoot: new ASTNodeImpl(storeState.grammarTag, 0, 0, []),
     treeSelection: null,
     output: null,
     outputError: null,
@@ -56,7 +54,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     });
   }
 
-  function mark(editor: CodeMirror.Editor, node: Node, className?: string): CMMark {
+  function mark(editor: CodeMirror.Editor, node: ASTNode, className?: string): CMMark {
 
     const doc = editor.getDoc();
 
@@ -95,7 +93,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     mark.clear();
   }
 
-  function renderSyntax(editor: CodeMirror.Editor, treeTokens: Node[]) {
+  function renderSyntax(editor: CodeMirror.Editor, treeTokens: ASTNode[]) {
 
     console.time('renderSyntax');
 
@@ -104,7 +102,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     if (editor) {
       let syntaxMarks = [];
       treeTokens.forEach(n => {
-        let m: CMMark = mark(editor, n, n.tokenType);
+        let m: CMMark = mark(editor, n, 'builtin');
         syntaxMarks.push(m);
       });
       _(s => ({ syntaxMarks: syntaxMarks }))
@@ -113,8 +111,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     console.timeEnd('renderSyntax');
   }
 
-  const renderSelection = debounce(function renderSelection(editor: CodeMirror.Editor, node: Node | null) {
-    //console.time('renderSelection');
+  const renderSelection = debounce(function renderSelection(editor: CodeMirror.Editor, node: ASTNode | null) {
     let markEl;
     let s0 = {};
 
@@ -146,7 +143,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     }
   }
 
-  function findTreeNode(index: number, treeRoot: Node): Node | null {
+  function findTreeNode(index: number, treeRoot: ASTNode): ASTNode | null {
 
     if (index >= treeRoot.end || index <= treeRoot.start) {
       return null;
@@ -181,39 +178,38 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
     console.time('updateStack');
 
-    const stack: Stack<Node> = new Stack();
-    stack.push(new Node('', 0, 0, []));
+    const stack: Stack<ASTNode> = new Stack();
+    stack.push(new ASTNodeImpl('', 0, 0, []));
 
-    const tokens: Node[] = [];
+    const tokens: ASTNode[] = [];
     let firstErr = null;
 
-    const {
-      tree,
-      parsedInput
-    } = parse(storeState.grammar, grammarTag, expression, rawContext);
+    const tree = storeState.grammar.parse(expression, {grammarTag, dataContext: rawContext});
 
     if (tree != null) {
-      tree.iterate({
-        enter(node: NodeType, start: number, end: number) {
+      tree.traverse({
+        enter(node: ASTNode) {
 
           const {
-            name
+            name,
+            start,
+            end
           } = node;
 
-          const input = parsedInput.slice(start, end);
+          const input = expression.slice(start, end);
 
-          const error = node.isError ? `Statement unparseable at [${start}, ${end}] for '${input}'` : null;
+          const error = node.error ? `Statement unparseable at [${start}, ${end}] for '${input}'` : null;
           if (error && !firstErr) {
             firstErr = error;
           }
 
-          const n = new Node(name, start, end, [], storeState.grammar.getEditorInfo().getTokenType(node)!, node.isSkipped, error);
+          const n = new ASTNodeImpl(name, start, end, [], node.skip, error);
 
           stack.push(n);
 
         },
 
-        leave(node: NodeType, start: number, end: number) {
+        leave(node: ASTNode) {
 
           const current = stack.pop();
 
@@ -225,7 +221,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
           parent.children.push(current);
 
-          if (syntaxHighlight && current.tokenType || current.error) {
+          if (syntaxHighlight && current.error) {
             tokens.push(current);
           }
         }
@@ -260,7 +256,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     context = context || {};
 
     try {
-      let output = evaluate(storeState.grammar, grammarTag, expression, context);
+      let output = storeState.grammar.eval(expression, {dataContext: context, grammarTag});
       if (!output) {
         throw Error(`Cannot evaluate expression: ${expression}.`);
       }
@@ -395,13 +391,13 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
             <label>Layout: </label>
 
-            <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', border: '1px solid grey', padding: '5px'}}>
+            <div className="option-set">
               <Toggle
                 id="layouting-toggle"
                 checked={state.layouting}
                 onChange={() => {_(s => ({layouting: !s.layouting, layoutingClassName: !s.layouting ? 'layouting': ''}))}} />
               <label htmlFor='layouting-toggle'>{state.layouting ? "Editable" : "Static"}</label>
-              <Button className="orange" onClick={() => {storeState.notifyShow('Layout resetted!', 'success');storeActions.setLayout(DEF_LAYOUT);}}>Reset</Button>
+              <Button className="orange" onClick={() => {storeState.notifyShow('Layout reset to default values!', 'success');storeActions.setLayout(DEF_LAYOUT);}}>Reset</Button>
             </div>
 
           </div>
@@ -466,12 +462,12 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
 interface State {
   syntaxHighlight: boolean;
-  treeRoot: Node;
-  treeSelection: Node | null;
+  treeRoot: ASTNode;
+  treeSelection: ASTNode | null;
   outputError: Error | null;
   output: string | null;
   contextParseError: string | null;
-  treeTokens : Node[];
+  treeTokens : ASTNode[];
   syntaxMarks : CMMark[];
   oldSelectionMark: CMMark;
   selectionMark: CMMark;
