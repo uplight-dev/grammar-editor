@@ -1,6 +1,5 @@
-import { ASTIterator, ASTNode, ASTNodeImpl, ASTNodeVisitor, JSONMapping, JSONWithMapping, OPTION_JSON_MAPPING, ParseMode, ParserAdapter, SimpleValue, Context } from '@lezer-editor/lezer-editor-common';
+import { ASTIterator, ASTIterators, ASTNodeImpl, Context, HydratedASTNode, JSONMapping, JSONWithMapping, OPTION_JSON_MAPPING, ParserAdapter, SimpleValue, HydratedOrASTNode, HydratedASTNodeImpl } from '@lezer-editor/lezer-editor-common';
 import jsext from '../jsext';
-const { transform } = require('node-json-transform');
 
 const DEFAULT_JSON_MAPPING : JSONMapping = {
   name: "name",
@@ -17,11 +16,11 @@ export default class ParserPlugin {
 
   }
 
-  eval(input: string, ctx: Context): ASTIterator {
+  eval(input: string, ctx: Context): ASTIterator<HydratedASTNode> {
     return this.parse0(input, {...ctx, mode: 'EVAL'});
   }
 
-  parse(input: string, ctx: Context): ASTIterator {
+  parse(input: string, ctx: Context): ASTIterator<HydratedASTNode> {
     return this.parse0(input, {...ctx, mode: 'PARSE'});
   }
 
@@ -29,7 +28,7 @@ export default class ParserPlugin {
     return this.parserAdapter.getOption(key);
   }
 
-  private parse0(input: string, ctx: Context): ASTIterator {
+  private parse0(input: string, ctx: Context): ASTIterator<HydratedASTNode> {
     const v = this.parserAdapter.parse(input, ctx);
     if (!v) {
       throw Error(`Error parsing. ${jsext.toStr({input})}`);
@@ -43,17 +42,18 @@ export default class ParserPlugin {
     return (this.parserAdapter.getOption && this.parserAdapter.getOption(OPTION_JSON_MAPPING)) || DEFAULT_JSON_MAPPING;
   }
 
-  private mapValue(v: any, jsonMapping: JSONMapping): ASTIterator {
-    return this.switchType<ASTIterator>(v, {
+  private mapValue(v: any, jsonMapping: JSONMapping): ASTIterator<HydratedASTNode> {
+    return this.switchType<ASTIterator<HydratedASTNode>>(v, {
       
       Primitive: (value) => {
-        const node = new ASTNodeImpl('value', 0, v.toString().length);
-        return ASTIterators.identityIterator(node);
+        const node = new HydratedASTNodeImpl({name: 'value', start: 0, end: value.toString().length});
+        return ASTIterators.fromIdentity<HydratedASTNode>(node);
       },
 
       JSON: (value) => {
         if (jsonMapping) {
-          return ASTIterators.json(value, jsonMapping);
+          const noDehydrate = false;//in GrammarEditor, we work with hydrated nodes
+          return ASTIterators.fromHydratedJson(value, jsonMapping, noDehydrate);
         }
         return null;
       },
@@ -62,19 +62,20 @@ export default class ParserPlugin {
         if (!value.mapping) {
           throw Error(`No mapping provided. API error? - ${jsext.toStr({value})}`)
         }
-        return ASTIterators.json(value.json, value.mapping);
+        const noDehydrate = false;//in GrammarEditor, we work with hydrated nodes
+        return ASTIterators.fromHydratedJson(value.json, value.mapping, noDehydrate);
       },
 
       ASTIterator: value => {
-        return value;
+        return value.hydrate();//ensure to hydrate the result ...
       }
 
     });
   }
 
-  private switchType<T>(v: any, 
-    visitor: {Primitive: (val : SimpleValue) => T, JSON: (val : JSON) => T, JSONWithMapping: (val : JSONWithMapping) => T, ASTIterator : (val : ASTIterator) => T}
-  ): T {
+  private switchType<V>(v: any, 
+    visitor: {Primitive: (val : SimpleValue) => V, JSON: (val : JSON) => V, JSONWithMapping: (val : JSONWithMapping) => V, ASTIterator : (val : ASTIterator<HydratedOrASTNode>) => V}
+  ): V {
     switch (typeof v) {
       case 'string':
       case 'boolean':
@@ -100,48 +101,10 @@ export default class ParserPlugin {
     return v1.mapping !== undefined && v1.json !== undefined;
   }
 
-  private isTreeVisitor(v: any) : v is ASTIterator {
-    return (v as ASTIterator).traverse !== undefined;
+  private isTreeVisitor(v: any) : v is ASTIterator<HydratedOrASTNode> {
+    return (v as ASTIterator<HydratedOrASTNode>).traverse !== undefined;
   }
 
-}
-
-const ASTIterators = {
-  identityIterator(n: ASTNode) {
-    return {
-      traverse(v: ASTNodeVisitor) {
-        v.enter(n);
-        v.leave(n);
-      }
-    }
-  },
-
-  json(json: JSON, jsonMapping: JSONMapping) {
-    const txMapping = { item : jsonMapping, operate: [{
-      on: jsonMapping['children'],
-      run: (json) => transform(json, txMapping)
-    }] };
-    const ast : ASTNode = transform(json, txMapping);
-
-    return toASTIterator(ast);
-  }
-  
-}
-
-function toASTIterator(node: ASTNode) : ASTIterator {
-  const recurse = (node: ASTNode, visitor: ASTNodeVisitor) => {
-    visitor.enter(node);
-    node.children?.forEach(c => {
-      recurse(c, visitor);
-    });
-    visitor.leave(node);
-  }
-
-  return {
-    traverse(visitor: ASTNodeVisitor) {
-      recurse(node, visitor);
-    }
-  }
 }
 
 

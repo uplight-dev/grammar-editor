@@ -11,7 +11,7 @@ import {GridStack} from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
 import Toggle from 'react-toggle'
 import Button from './button';
-import { ASTNode, ASTNodeImpl, OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
+import { ASTIterator, ASTIteratorImpl, ASTNode, ASTNodeImpl, HydratedASTNode, HydratedASTNodeImpl, OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
 
 const GrammarInspector: FunctionalComponent<any> = () => {
   const [storeState, storeActions] = useStore();
@@ -32,7 +32,8 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
   const [state, setState] = useState<State>({
     syntaxHighlight: true,
-    treeRoot: new ASTNodeImpl(storeState.grammarTag, 0, 0, []),
+    tree: null,
+    treeRoot: new HydratedASTNodeImpl({name: storeState.grammarTag, start: 0, end: 0, children: []}),
     treeSelection: null,
     output: null,
     outputError: null,
@@ -143,7 +144,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     }
   }
 
-  function findTreeNode(index: number, treeRoot: ASTNode): ASTNode | null {
+  function findTreeNode(index: number, treeRoot: HydratedASTNode): ASTNode | null {
 
     if (index >= treeRoot.end || index <= treeRoot.start) {
       return null;
@@ -178,8 +179,8 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
     console.time('updateStack');
 
-    const stack: Stack<ASTNode> = new Stack();
-    stack.push(new ASTNodeImpl('', 0, 0, []));
+    const stack: Stack<HydratedASTNode> = new Stack();
+    stack.push(new HydratedASTNodeImpl({name: '', start: 0, end: 0, children: []}));
 
     const tokens: ASTNode[] = [];
     let firstErr = null;
@@ -187,8 +188,8 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     const tree = storeState.grammar.parse(expression, {grammarTag, dataContext: rawContext});
 
     if (tree != null) {
-      tree.traverse({
-        enter(node: ASTNode) {
+      tree.traverse({//hydrate the ASTNode even further with errors, etc.
+        enter(node: HydratedASTNode) {
 
           const {
             name,
@@ -203,13 +204,13 @@ const GrammarInspector: FunctionalComponent<any> = () => {
             firstErr = error;
           }
 
-          const n = new ASTNodeImpl(name, start, end, [], node.skip, error);
+          const n = new HydratedASTNodeImpl({name, start, end, children: [], skip: node.skip, error});
 
           stack.push(n);
 
         },
 
-        leave(node: ASTNode) {
+        leave(node: HydratedASTNode) {
 
           const current = stack.pop();
 
@@ -229,7 +230,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     }
 
     _(s => {
-      let r : any = { treeRoot: stack.top.children[stack.top.children.length - 1], treeTokens: tokens};
+      let r : any = { treeRoot: stack.top.children[stack.top.children.length - 1], treeTokens: tokens, tree};
       r = {...r, outputError: firstErr};
       return r;
     })
@@ -256,7 +257,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     context = context || {};
 
     try {
-      let output = storeState.grammar.eval(expression, {dataContext: context, grammarTag});
+      let output = storeState.grammar.eval(expression, {dataContext: context, grammarTag, astIterator: state.tree});
       if (!output) {
         throw Error(`Cannot evaluate expression: ${expression}.`);
       }
@@ -462,12 +463,13 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
 interface State {
   syntaxHighlight: boolean;
-  treeRoot: ASTNode;
-  treeSelection: ASTNode | null;
+  tree: ASTIterator<HydratedASTNode>;
+  treeRoot: HydratedASTNode;
+  treeSelection: HydratedASTNode | null;
   outputError: Error | null;
   output: string | null;
   contextParseError: string | null;
-  treeTokens : ASTNode[];
+  treeTokens : HydratedASTNode[];
   syntaxMarks : CMMark[];
   oldSelectionMark: CMMark;
   selectionMark: CMMark;

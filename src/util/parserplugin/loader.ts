@@ -13,17 +13,18 @@ export default class GrammarLoader {
                 deployURL = 'https://cors-anywhere.herokuapp.com/' + deployURL;
             }
 
-            let parserAdapter = await import(
+            const module = await import(
                 /* webpackIgnore: true */
                 deployURL + '/index.es.js'
                 );
-            if (parserAdapter === null) {
+            if (module === null) {
                 console.error('Error loading grammar ...')
                 this.parserPlugin = null;
             }
             //parserAdapter = {...parserAdapter};//prevent shallow equality issue when loading same URL again
+            const {ParserAdapterImpl} = module;
             console.log('GrammarLoader: Grammar loaded');
-            const ret = new ParserPlugin(parserAdapter);
+            const ret = new ParserPlugin(new ParserAdapterImpl());
             console.log('Old equals: '+ (this.parserPlugin === ret))
             return ret;
         } catch (e) {
