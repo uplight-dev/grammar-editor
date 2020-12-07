@@ -1,4 +1,4 @@
-import { ASTIterator, ASTIterators, ASTNodeImpl, Context, HydratedASTNode, JSONMapping, JSONWithMapping, OPTION_JSON_MAPPING, ParserAdapter, SimpleValue, HydratedOrASTNode, HydratedASTNodeImpl } from '@lezer-editor/lezer-editor-common';
+import { ASTIterator, ASTIterators, ASTNodeImpl, Context, HydratedASTNode, JSONMapping, JSONWithMapping, OPTION_JSON_MAPPING, ParserAdapter, SimpleValue, HydratedOrASTNode, HydratedASTNodeImpl, ASTNodeVisitor } from '@lezer-editor/lezer-editor-common';
 import jsext from '../jsext';
 
 const DEFAULT_JSON_MAPPING : JSONMapping = {
@@ -35,6 +35,10 @@ export default class ParserPlugin {
     }
     const jsonMapping = this.getJsonMapping();
     const r = this.mapValue(v, jsonMapping);
+    if (ctx.mode == 'EVAL') {
+      const v = ASTIterators.toList(r);
+      return v && v.length > 0 && v[0].value;
+    }
     return r;
   }
 
@@ -46,7 +50,7 @@ export default class ParserPlugin {
     return this.switchType<ASTIterator<HydratedASTNode>>(v, {
       
       Primitive: (value) => {
-        const node = new HydratedASTNodeImpl({name: 'value', start: 0, end: value.toString().length});
+        const node = new HydratedASTNodeImpl({name: 'value', value: value, start: 0, end: value.toString().length, children: []});
         return ASTIterators.fromIdentity<HydratedASTNode>(node);
       },
 

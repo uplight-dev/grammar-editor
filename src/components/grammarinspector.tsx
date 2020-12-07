@@ -1,17 +1,16 @@
+import { ASTIterator, ASTNode, ASTNodeVisitor, HydratedASTNode, HydratedASTNodeImpl, OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
 import * as CodeMirror from 'codemirror';
-import { NodeType } from 'lezer';
-import { debounce, first } from 'lodash-es';
+import { GridStack } from 'gridstack';
+import 'gridstack/dist/gridstack.min.css';
+import { debounce } from 'lodash-es';
 import { FunctionalComponent, h } from "preact";
-import { Ref, useRef, useState, useEffect } from "preact/hooks";
+import { Ref, useEffect, useRef, useState } from "preact/hooks";
+import Toggle from 'react-toggle';
 import { Stack } from 'stack-typescript';
 import { DEF_LAYOUT, useStore } from '../ctx/ctx';
+import Button from './button';
 import CodeMirrorExt from './codemirrorext';
 import { TreeNode } from './treenode';
-import {GridStack} from 'gridstack';
-import 'gridstack/dist/gridstack.min.css';
-import Toggle from 'react-toggle'
-import Button from './button';
-import { ASTIterator, ASTIteratorImpl, ASTNode, ASTNodeImpl, HydratedASTNode, HydratedASTNodeImpl, OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
 
 const GrammarInspector: FunctionalComponent<any> = () => {
   const [storeState, storeActions] = useStore();
@@ -103,7 +102,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     if (editor) {
       let syntaxMarks = [];
       treeTokens.forEach(n => {
-        let m: CMMark = mark(editor, n, 'builtin');
+        let m: CMMark = mark(editor, n, !n.error ? 'builtin' : 'error');
         syntaxMarks.push(m);
       });
       _(s => ({ syntaxMarks: syntaxMarks }))
@@ -257,6 +256,9 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     context = context || {};
 
     try {
+      if (!state.tree) {
+        return;
+      }
       let output = storeState.grammar.eval(expression, {dataContext: context, grammarTag, astIterator: state.tree});
       if (!output) {
         throw Error(`Cannot evaluate expression: ${expression}.`);
