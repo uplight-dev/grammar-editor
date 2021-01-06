@@ -1,1 +1,1 @@
-export { default as ParserPlugin } from './parserplugin/parserplugin';
+export { default as GrammarPlugin } from './parserplugin/grammarplugin';

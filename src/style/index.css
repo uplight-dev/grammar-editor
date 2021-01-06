@@ -92,7 +92,11 @@ body {
     grid-row-gap: 10px;
 }
 
-
+.grid1xh {
+    display: grid;
+    grid-template-rows: auto;
+    grid-column-gap: 10px;
+}
 /* MODAL */
 
 .Modal {

@@ -1,40 +1,44 @@
-import ParserPlugin from './parserplugin';
-
+import GrammarPlugin from './grammarplugin';
+import { EndpointType, GrammarAdapters } from './grammaradapters';
+import { CompileStatus, GrammarAdapter, GrammarEndpoint, JSONMapping } from '@lezer-editor/lezer-editor-common';
 export default class GrammarLoader {
-    private parserPlugin : ParserPlugin = null;
 
-    constructor() {
+    private parserPlugin : GrammarPlugin = null;
+
+    constructor(private clientId: string) {
 
     }
 
-    async load(deployURL: string) : Promise<ParserPlugin> {
+    async load(endpointURL: string, jsonMapping: JSONMapping) : Promise<GrammarPlugin> {
         try {
-            if (deployURL.indexOf('github.com') > -1) {
-                deployURL = 'https://cors-anywhere.herokuapp.com/' + deployURL;
+            this.parserPlugin = null;
+
+            if (endpointURL.indexOf('github.com') > -1) {
+                endpointURL = 'https://cors-anywhere.herokuapp.com/' + endpointURL;
             }
 
-            const module = await import(
-                /* webpackIgnore: true */
-                deployURL + '/index.es.js'
-                );
-            if (module === null) {
-                console.error('Error loading grammar ...')
-                this.parserPlugin = null;
+            const sniffResult = await GrammarAdapters.sniff(endpointURL);
+
+            if (sniffResult.type == EndpointType.STATICJS) {
+                this.parserPlugin = await GrammarPlugin.build(
+                    GrammarAdapters.staticEndpoint(sniffResult.url, sniffResult.supportsRecompile),
+                    this.clientId, jsonMapping);
+            } else if (sniffResult.type == EndpointType.LIVE) {
+                this.parserPlugin = await GrammarPlugin.build(
+                    GrammarAdapters.liveEndpoint(sniffResult.url, sniffResult.supportsRecompile),
+                    this.clientId, jsonMapping);
             }
-            //parserAdapter = {...parserAdapter};//prevent shallow equality issue when loading same URL again
-            const {ParserAdapterImpl} = module;
-            console.log('GrammarLoader: Grammar loaded');
-            const ret = new ParserPlugin(new ParserAdapterImpl());
-            console.log('Old equals: '+ (this.parserPlugin === ret))
-            return ret;
+            return this.parserPlugin;
         } catch (e) {
             console.error('Error loading grammar: ' + e)
             this.parserPlugin = null;
         }
     }
 
-    get() : ParserPlugin {
+    get() : GrammarPlugin {
         return this.parserPlugin;
     }
+
+    
 
 }

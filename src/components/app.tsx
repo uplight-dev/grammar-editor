@@ -105,7 +105,7 @@ const Header = ({popupManager}) => {
         <img src={icon} style={{width:32, height:32}} />
         <span>Lezer Editor </span>
         <a target="_blank" className="grammar-url"
-            href={storeState.repos[storeState.repoIdx].repoUrl}>{storeState.repos[storeState.repoIdx].repoUrl}
+            href={storeState.grammars[storeState.repoIdx].url}>{storeState.grammars[storeState.repoIdx].url}
         </a>
         <div style={{marginLeft:'auto', marginRight: '10px'}}>
             <Button onClick={() => {

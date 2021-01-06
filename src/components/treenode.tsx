@@ -1,11 +1,11 @@
-import { ASTNode } from "@lezer-editor/lezer-editor-common";
+import { HydratedASTNode } from "@lezer-editor/lezer-editor-common";
 import { FunctionalComponent, h } from "preact";
 import { useRef } from "react";
 import * as style from "./treenode.css";
 export interface Props {
-  node: ASTNode;
+  node: HydratedASTNode;
   onSelect: Function;
-  selection?: ASTNode;
+  selection?: HydratedASTNode;
 }
 
 export const TreeNode: FunctionalComponent<Props> = ({ node, onSelect, selection }: Props) => {
@@ -41,8 +41,7 @@ export const TreeNode: FunctionalComponent<Props> = ({ node, onSelect, selection
 
       {node.children.length > 0 && (
         <div class={style.children}>
-          {node.children.map((child: ASTNode) => {
-            //console.log('xxx=' + child.name);
+          {node.children.map((child: HydratedASTNode) => {
             return (
               <div>
                 <TreeNode node={child} onSelect={onSelect} selection={selection}></TreeNode>

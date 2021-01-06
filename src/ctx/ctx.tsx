@@ -1,14 +1,12 @@
-import { createHook, createStore } from 'react-sweet-state';
+import { JSONMapping, OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
+import { createHook, createStore, Store } from 'react-sweet-state';
 import store from 'store';
-import { Repo } from '../components/reposelect';
-import GrammarLoader from '../util/parserplugin/loader';
+import uuid from 'uuid/v4';
+import { EditorGrammar, EditorGrammarUtils } from '../util/editorgrammar';
 import jsext from '../util/jsext';
-import { ParserPlugin } from '../util';
-import { OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
+import GrammarLoader from '../util/parserplugin/loader';
 
-export const DEMO_GITHUB_URL = 'https://github.com/lezer-editor/lezer-example-grammar';
-const DEMO_DEPLOY_URL = 'https://cdn.jsdelivr.net/npm/@lezer-editor/lezer-example-grammar@1.0.1/dist';
-const DEMO_REPLIT_URL = 'https://repl.it/@lezereditor/lezer-example-grammar';
+const DEMO_GRAMMAR_URL = 'https://cdn.jsdelivr.net/npm/@lezer-editor/lezer-example-grammar@1.0.1/dist';
 
 export const DEF_LAYOUT = [
     {
@@ -57,7 +55,19 @@ export const DEF_LAYOUT = [
     }
   ];
 
-function storedState(state: any) {
+function filterPersistentState(state: any) {
+    return {
+        clientId: state.clientId,
+        expression: state.expression,
+        contextStr: state.contextStr,
+        grammarTag: state.grammarTag,
+        repos: state.repos,
+        repoIdx: state.repoIdx,
+        layout: state.layout
+    }
+}
+
+function filterSharableState(state: any) {
     return {
         expression: state.expression,
         contextStr: state.contextStr,
@@ -69,15 +79,16 @@ function storedState(state: any) {
 }
 
 function mergeData(state, data) {
-    data = storedState(data);
+    data = filterPersistentState(data);
     state = {...state, ...data}
     return state;
 }
 
-async function localStorageReload({setState, getState}) {
+async function localStorageReload(props: StoreProps) {
+    const {setState, getState, dispatch} = props;
     let dataObj = store.get('dataStr');
     let data = null;
-    let state = {...getState()}
+    let state = {...getState()};
 
     console.log(`localStorageReload: ${jsext.toStr(dataObj)}`)
     if (dataObj){
@@ -89,55 +100,104 @@ async function localStorageReload({setState, getState}) {
         state = mergeData(state, data);
     }
 
-    await grammarUrlChanged(state.repos[state.repoIdx].deployUrl, setState, () => state);
+    await activeGrammarChanged(state.grammarIdx, {...props, getState: () => state});
 }
 
-async function grammarUrlChanged(grammarUrl, setState, getState) {
-    const grammar = await getState().grammarLoader.load(grammarUrl);
+async function activeGrammarChanged(grammarIdx: number, props: StoreProps) {
+    const {setState, getState, dispatch} = props;
+
+    const grammar = getState().grammars[grammarIdx];
+    //attempt to load plugin ...
+    if (!grammar.plugin) {
+        const grammarPlugin = await getState().grammarLoader.load(grammar.url, grammar.jsonMapping);
+        grammar.plugin = grammarPlugin;
+    }
+    const grammarTags = [...await grammar.plugin.getOption(OPTION_ROOT_TAGS)];
     
-    grammarChanged(grammar, setState, getState)
-}
-
-function grammarChanged(grammar : ParserPlugin, setState : (StoreType) => void, getState : () => StoreType) {
-    const state = getState() as StoreType;
-    const tags = [...grammar.getOption(OPTION_ROOT_TAGS)];
-
     setState({
         ...getState(),
-        ...state,
+        grammarIdx,
         grammar,
-        grammarTags: tags,
-        grammarTag: tags?.length > 0 && tags[0]
+        grammarTags,
+        grammarTag: grammarTags?.length > 0 && grammarTags[0]
     })
+    dispatch(actions.stateToStorage())
 }
 
 const actions = {
-    init: () => async (props: {setState, getState, dispatch}) => {
-        localStorageReload(props);
-    },
+    init: () => async (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
 
-    setGrammar: (grammar : ParserPlugin) => ({setState, getState}) => {
-        const state = getState();
-        grammarChanged(grammar, setState, () => state);
-    },
-
-    setRepos: (repos) => ({setState, getState, dispatch}) => {
+        //init
+        const clientId = uuid();
         setState({
             ...getState(),
-            repos: repos
+            clientId,
+            grammarLoader: new GrammarLoader(clientId)
+        });
+
+        //load grammar
+        localStorageReload({setState, getState, dispatch});
+    },
+
+    addGrammarByUrl: (url: string, jsonMapping: JSONMapping) => async (props: StoreProps) => {
+        const {getState, dispatch} = props;
+        const grammarPlugin = await getState().grammarLoader.load(url, jsonMapping);
+        const grammar = await EditorGrammarUtils.from(url, grammarPlugin);
+        const grammars = [grammar, ...getState().grammars];
+
+        dispatch(actions.setGrammars(grammars))
+        dispatch(actions.setGrammarIdx(0));
+    },
+
+    setGrammars: (grammars) => async (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
+        setState({
+            ...getState(),
+            grammars
         });
         dispatch(actions.stateToStorage())
     },
 
-    setRepoIdx: (idx) => ({setState, getState, dispatch}) => {
+    // setGrammarByUrl: async (url: string) => async (props: StoreProps) => {
+    //     const {setState, getState, dispatch} = props;
+    //     const grammar = await getState().grammarLoader.load(url, getState().);
+    
+    //     await grammarChanged(grammar, props)
+    // },
+
+    addGrammar: (grammar: EditorGrammar) => async (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
+        const ret = [grammar, ...getState().grammars];
+
+        dispatch(actions.setGrammars(ret));
+        dispatch(actions.setGrammarIdx(0));
+    },
+
+    updateGrammar: (idx: number, grammar : EditorGrammar) => async (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
+        const grammars = [...getState().grammars];
+        grammars[idx] = grammar;
+
         setState({
             ...getState(),
-            repoIdx: idx
-        });
+            grammars
+        })
+        if (idx == getState().grammarIdx) {
+            await activeGrammarChanged(idx, props);
+        }
         dispatch(actions.stateToStorage())
     },
 
-    setExpression: (expr) => ({setState, getState, dispatch}) => {
+    setGrammarIdx: (idx: number) => async (props: StoreProps) => {
+        const {dispatch} = props;
+        
+        await activeGrammarChanged(idx, props);
+        dispatch(actions.stateToStorage())
+    },
+
+    setExpression: (expr) => (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
         setState({
             ...getState(),
             expression: expr
@@ -145,7 +205,8 @@ const actions = {
         dispatch(actions.stateToStorage())
     },
     
-    setContextStr: (contextStr) => ({setState, getState, dispatch}) => {
+    setContextStr: (contextStr) => (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
         setState({
             ...getState(),
             contextStr: contextStr
@@ -153,7 +214,8 @@ const actions = {
         dispatch(actions.stateToStorage())
     },
 
-    setLayout: (layout) => ({setState, getState, dispatch}) => {
+    setLayout: (layout) => (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
         setState({
             ...getState(),
             layout
@@ -162,17 +224,18 @@ const actions = {
         getState().notifyShow('Layout saved!', 'success')
     },
 
-    setNotifyShow: (notifyShow) => ({setState, getState}) => {
+    setNotifyShow: (notifyShow) => (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
         setState({
             ...getState(),
             notifyShow: notifyShow
         });
     },
 
-    import: (dataStr, includeLayout) => (props:{setState, getState}) => {
+    import: (dataStr, includeLayout) => (props: StoreProps) => {
         try {
             let data = JSON.parse(dataStr);
-            data = storedState(data);
+            data = filterSharableState(data);
             if (!includeLayout) {
                 data.layout = null;
             }
@@ -184,29 +247,32 @@ const actions = {
         }
     },
 
-    export: () => ({setState, getState}) => {
-        let data = storedState(getState());
+    export: () => (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
+        let data = filterSharableState(getState());
         let dump = JSON.stringify(data, null, 2)
         return dump;
     },
     
-    stateToStorage: () => ({setState, getState}) => {
-        let data = storedState(getState());
+    stateToStorage: () => (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
+        let data = filterPersistentState(getState());
         store.set('dataStr', JSON.stringify(data));
     }
 }
 
 const Store = createStore({
     initialState: {
+        clientId: null,
         shareStr: null,
         expression: 'var1 = "hello world";\nprint(var1)',
         contextStr: JSON.stringify({person: {name: 'John', surname: 'Doe'}}),
+        grammars: [],
+        grammarIdx: 0,
         grammar: null,
         grammarTag: null,
         grammarTags: [],
-        grammarLoader: new GrammarLoader(),
-        repos: [new Repo(DEMO_GITHUB_URL, DEMO_DEPLOY_URL, DEMO_REPLIT_URL)],
-        repoIdx: 0,
+        grammarLoader: null,
         notifyShow: (...args) => {console.warn('Notify not inited yet ...')},
         layout: DEF_LAYOUT
     } as StoreType,
@@ -215,17 +281,24 @@ const Store = createStore({
 });
 
 interface StoreType {
+    clientId: string,
     shareStr: string,
     expression: string,
     contextStr: string,
-    grammar: ParserPlugin
+    grammars: EditorGrammar[],
+    grammarIdx: number,
+    grammar: EditorGrammar,
     grammarTag: string,
     grammarTags: string[],
     grammarLoader: GrammarLoader,
-    repos: Repo[],
-    repoIdx: number,
     notifyShow: (...args : any) => void,
     layout: []
+}
+
+interface StoreProps {
+    setState: (state: StoreType) => void;
+    getState: () => StoreType;
+    dispatch: any;
 }
 
 export const useStore = createHook(Store);

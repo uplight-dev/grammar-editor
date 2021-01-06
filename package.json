@@ -35,13 +35,15 @@
         "preact-router": "^3.2.1",
         "react-modal": "^3.11.2",
         "react-notify-toast": "^0.5.1",
+        "react-osx-dock": "^1.0.0",
         "react-popup-manager": "^2.0.28",
         "react-sweet-state": "^2.4.4",
         "react-tabs": "^3.1.1",
         "react-toggle": "^4.1.1",
         "rendition": "^18.13.2",
         "stack-typescript": "^1.0.4",
-        "store": "^2.0.12"
+        "store": "^2.0.12",
+        "uuid": "^3.4.0"
     },
     "devDependencies": {
         "@types/enzyme": "^3.10.5",

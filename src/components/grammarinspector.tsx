@@ -16,14 +16,16 @@ const GrammarInspector: FunctionalComponent<any> = () => {
   const [storeState, storeActions] = useStore();
 
   if (!storeState.grammar) {
-    return (<div>Loading ...</div>);
+    return (<div style="width: 100%; height: 100%; display:flex; justify-content:center; align-items: center; font-size: 2em">
+    <span style="background-color: yellow">Loading ...</span>
+    </div>);
   }
 
   const codeEditor = useRef<CodeMirror.Editor>(null);
   const contextEditor = useRef<CodeMirror.Editor>(null);
   const grammarTagSelect: Ref<HTMLSelectElement> = useRef();
 
-  const tags = storeState.grammar.getOption(OPTION_ROOT_TAGS);
+  const tags = storeState.grammarTags;
   if (!tags || tags.length == 0) {
     alert('Invalid grammar provided!')
     throw "Invalid grammar provided!";
@@ -173,7 +175,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
 
   }
 
-  const updateStack = debounce(function updateStack(grammarTag: string, expression: string, rawContext: Object, syntaxHighlight: boolean) {
+  const updateStack = debounce(async function updateStack(grammarTag: string, expression: string, rawContext: Object, syntaxHighlight: boolean) {
     rawContext = rawContext || {};
 
     console.time('updateStack');
@@ -184,7 +186,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     const tokens: ASTNode[] = [];
     let firstErr = null;
 
-    const tree = storeState.grammar.parse(expression, {grammarTag, dataContext: rawContext});
+    const tree = await storeState.grammar.parse(grammarTag, expression);
 
     if (tree != null) {
       tree.traverse({//hydrate the ASTNode even further with errors, etc.
@@ -259,7 +261,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
       if (!state.tree) {
         return;
       }
-      let output = storeState.grammar.eval(expression, {dataContext: context, grammarTag, astIterator: state.tree});
+      let output = storeState.grammar.eval(grammarTag, expression, context);
       if (!output) {
         throw Error(`Cannot evaluate expression: ${expression}.`);
       }
