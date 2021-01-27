@@ -1,8 +1,17 @@
 import { OPTION_EDITOR_URL, OPTION_SUPPORTS, JSONMapping } from '@grammar-editor/grammar-editor-api'
 import { GrammarPlugin } from "../util";
 
+export const DEFAULT_JSON_MAPPING : JSONMapping = {
+  name: "name",
+  start: "start", end: "end",
+  skip: "skip",
+  error: "error",
+  value: "value",
+  children: "children"
+};
+
 export class Grammar {
-  constructor(public name?: string, public url?: string, public predefined?: boolean) {
+  constructor(public name?: string, public url?: string, public jsonMapping?: JSONMapping, public rootTags?: string[], public predefined?: boolean) {
 
   }
 }
@@ -12,8 +21,6 @@ export class EditorGrammar extends Grammar {
   public plugin: GrammarPlugin = null;
   public externalEditorEnabled: boolean = false;
   public externalEditorUrl: boolean = null;
-  public rootTags : string[];
-  public jsonMapping: JSONMapping = null;
 
   constructor() {
     super();

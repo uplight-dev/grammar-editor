@@ -2,7 +2,7 @@ import { JSONMapping, OPTION_ROOT_TAGS } from '@grammar-editor/grammar-editor-ap
 import { defaults, createHook, createStore } from 'react-sweet-state';
 import store from 'store';
 import uuid from 'uuid/v4';
-import { EditorGrammar, EditorGrammarUtils, Grammar } from '../util/editorgrammar';
+import { DEFAULT_JSON_MAPPING, EditorGrammar, EditorGrammarUtils, Grammar } from '../util/editorgrammar';
 import jsext from '../util/jsext';
 import GrammarLoader from '../util/parserplugin/loader';
 import {produce} from 'immer';
@@ -62,7 +62,14 @@ export const DEF_LAYOUT = [
   ];
 
 const PREDEFINED_GRAMMARS : Grammar[] = [
-    new Grammar('Lezer', 'http://localhost:3000', true),
+    new Grammar('Lezer', 'http://localhost:3000', {
+        name: "name",
+        start: "start", end: "end",
+        skip: "skip",
+        error: "error",
+        value: "value",
+        children: "children"
+    }, [], true),
     new Grammar('Peg.js', 'https://cdn.jsdelivr.net/npm/@grammar-editor/lezer-example-grammar@1.0.1/dist', true),
     new Grammar('Chevrotain', 'https://cdn.jsdelivr.net/npm/@grammar-editor/lezer-example-grammar@1.0.1/dist', true)
 ];

@@ -186,7 +186,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     const tokens: ASTNode[] = [];
     let firstErr = null;
 
-    const tree = await storeState.grammar.plugin.parse(grammarTag, expression);
+    const tree = await storeState.grammar.plugin.parse(grammarTag, expression, storeState.grammar.jsonMapping);
 
     if (tree != null) {
       tree.traverse({//hydrate the ASTNode even further with errors, etc.

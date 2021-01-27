@@ -1,31 +1,20 @@
 import { EvalMode, ASTIterator, ASTIterators, HydratedASTNode, HydratedASTNodeImpl, JSONMapping, CompileStatus, SimpleValue, GrammarEndpoint, GrammarAdapter } from '@grammar-editor/grammar-editor-api';
 import jsext from '../jsext';
 
-const DEFAULT_JSON_MAPPING : JSONMapping = {
-  name: "type.name",
-  start: "start", end: "end",
-  skip: "skip",
-  error: "error",
-  value: "value",
-  children: "children"
-};
-
 export default class GrammarPlugin {
   private grammarEndpoint: GrammarEndpoint;
   private grammarAdapter: GrammarAdapter;
   private clientId: string;
-  private jsonMapping: JSONMapping;
 
   private constructor() {
     
   }
 
-  public static async build(grammarEndpoint: GrammarEndpoint, clientId: string, jsonMapping: JSONMapping) : Promise<GrammarPlugin> {
+  public static async build(grammarEndpoint: GrammarEndpoint, clientId: string) : Promise<GrammarPlugin> {
     let r = new GrammarPlugin();
     r.grammarEndpoint = grammarEndpoint;
     r.grammarAdapter = await grammarEndpoint.adapter(clientId);
     r.clientId = clientId;
-    r.jsonMapping = jsonMapping;
     return r;
   }
 
@@ -45,7 +34,7 @@ export default class GrammarPlugin {
     return v;
   }
 
-  async parse(rootTag: string, input: string): Promise<ASTIterator<HydratedASTNode>> {
+  async parse(rootTag: string, input: string, jsonMapping: JSONMapping): Promise<ASTIterator<HydratedASTNode>> {
     if (!this.grammarAdapter.eval) {
       return null;
     }
@@ -54,7 +43,7 @@ export default class GrammarPlugin {
       throw Error(`Error parsing. ${jsext.toStr({input})}`);
     }
     let r = v;
-    r = this.mapValue(v, this.jsonMapping || DEFAULT_JSON_MAPPING);
+    r = this.mapValue(v, jsonMapping);
     return r;
   }
 
@@ -84,7 +73,7 @@ export default class GrammarPlugin {
 
       });
     } catch (e) {
-      throw Error('Mapping of value failed.');
+      throw Error('Mapping of value failed: ' + e.message);
     }
   }
 

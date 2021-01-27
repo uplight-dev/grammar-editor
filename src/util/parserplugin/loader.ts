@@ -9,7 +9,7 @@ export default class GrammarLoader {
 
     }
 
-    async load(endpointURL: string, jsonMapping: JSONMapping) : Promise<GrammarPlugin> {
+    async load(endpointURL: string) : Promise<GrammarPlugin> {
         try {
             this.parserPlugin = null;
 
@@ -22,11 +22,11 @@ export default class GrammarLoader {
             if (sniffResult.type == EndpointType.STATICJS) {
                 this.parserPlugin = await GrammarPlugin.build(
                     GrammarAdapters.staticEndpoint(sniffResult.url, sniffResult.supports.includes(SUPPORTS_RECOMPILE)),
-                    this.clientId, jsonMapping);
+                    this.clientId);
             } else if (sniffResult.type == EndpointType.LIVE) {
                 this.parserPlugin = await GrammarPlugin.build(
                     GrammarAdapters.liveEndpoint(sniffResult.url, sniffResult.supports.includes(SUPPORTS_RECOMPILE)),
-                    this.clientId, jsonMapping);
+                    this.clientId);
             }
             return this.parserPlugin;
         } catch (e) {
