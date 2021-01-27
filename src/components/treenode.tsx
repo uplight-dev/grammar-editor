@@ -1,4 +1,4 @@
-import { HydratedASTNode } from "@lezer-editor/lezer-editor-common";
+import { HydratedASTNode } from "@grammar-editor/grammar-editor-api";
 import { FunctionalComponent, h } from "preact";
 import { useRef } from "react";
 import * as style from "./treenode.css";

@@ -1,2 +1,2 @@
-# lezer-editor
+# grammar-editor
 

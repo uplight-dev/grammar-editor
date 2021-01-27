@@ -1,4 +1,4 @@
-import { ASTIterator, ASTNode, ASTNodeVisitor, HydratedASTNode, HydratedASTNodeImpl, OPTION_ROOT_TAGS } from '@lezer-editor/lezer-editor-common';
+import { ASTIterator, ASTNode, ASTNodeVisitor, HydratedASTNode, HydratedASTNodeImpl, OPTION_ROOT_TAGS } from '@grammar-editor/grammar-editor-api';
 import * as CodeMirror from 'codemirror';
 import { GridStack } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
@@ -186,7 +186,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     const tokens: ASTNode[] = [];
     let firstErr = null;
 
-    const tree = await storeState.grammar.parse(grammarTag, expression);
+    const tree = await storeState.grammar.plugin.parse(grammarTag, expression);
 
     if (tree != null) {
       tree.traverse({//hydrate the ASTNode even further with errors, etc.
@@ -261,7 +261,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
       if (!state.tree) {
         return;
       }
-      let output = storeState.grammar.eval(grammarTag, expression, context);
+      let output = storeState.grammar.plugin.eval(grammarTag, expression, context);
       if (!output) {
         throw Error(`Cannot evaluate expression: ${expression}.`);
       }
@@ -302,7 +302,8 @@ const GrammarInspector: FunctionalComponent<any> = () => {
   useEffect(() => {
     const grid = GridStack.init({column: 12, minRow: 1, cellHeight: 64, disableOneColumnMode: false, animate: false, staticGrid: true});
     if (storeState && storeState.layout) {
-      grid.load(storeState.layout);
+      //why?! need to clone spread arr otherwise err: Cannot assign to read only property '0' of object '[object Array]'
+      grid.load([...storeState.layout]);
     }
     _(s => ({grid: grid}));
 

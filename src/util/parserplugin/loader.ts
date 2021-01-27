@@ -1,6 +1,6 @@
 import GrammarPlugin from './grammarplugin';
-import { EndpointType, GrammarAdapters } from './grammaradapters';
-import { CompileStatus, GrammarAdapter, GrammarEndpoint, JSONMapping } from '@lezer-editor/lezer-editor-common';
+import { GrammarAdapters } from './grammaradapters';
+import { JSONMapping, EndpointType, SUPPORTS_RECOMPILE } from '@grammar-editor/grammar-editor-api';
 export default class GrammarLoader {
 
     private parserPlugin : GrammarPlugin = null;
@@ -17,21 +17,21 @@ export default class GrammarLoader {
                 endpointURL = 'https://cors-anywhere.herokuapp.com/' + endpointURL;
             }
 
-            const sniffResult = await GrammarAdapters.sniff(endpointURL);
+            const sniffResult = await GrammarAdapters.sniff(this.clientId, endpointURL);
 
             if (sniffResult.type == EndpointType.STATICJS) {
                 this.parserPlugin = await GrammarPlugin.build(
-                    GrammarAdapters.staticEndpoint(sniffResult.url, sniffResult.supportsRecompile),
+                    GrammarAdapters.staticEndpoint(sniffResult.url, sniffResult.supports.includes(SUPPORTS_RECOMPILE)),
                     this.clientId, jsonMapping);
             } else if (sniffResult.type == EndpointType.LIVE) {
                 this.parserPlugin = await GrammarPlugin.build(
-                    GrammarAdapters.liveEndpoint(sniffResult.url, sniffResult.supportsRecompile),
+                    GrammarAdapters.liveEndpoint(sniffResult.url, sniffResult.supports.includes(SUPPORTS_RECOMPILE)),
                     this.clientId, jsonMapping);
             }
             return this.parserPlugin;
         } catch (e) {
             console.error('Error loading grammar: ' + e)
-            this.parserPlugin = null;
+            throw e;
         }
     }
 

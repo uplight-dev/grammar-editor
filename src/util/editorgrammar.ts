@@ -1,17 +1,22 @@
-import { OPTION_EDITOR_URL, OPTION_SUPPORTS, SUPPORTS_MAPPING, JSONMapping } from '@lezer-editor/lezer-editor-common'
+import { OPTION_EDITOR_URL, OPTION_SUPPORTS, JSONMapping } from '@grammar-editor/grammar-editor-api'
 import { GrammarPlugin } from "../util";
 
-export class EditorGrammar {
-  public name: string = "New grammar";
+export class Grammar {
+  constructor(public name?: string, public url?: string, public predefined?: boolean) {
+
+  }
+}
+export class EditorGrammar extends Grammar {
   public isPredefined: boolean = false;
-  public url: string;
   public supportsArr: string[] = [];
   public plugin: GrammarPlugin = null;
   public externalEditorEnabled: boolean = false;
   public externalEditorUrl: boolean = null;
+  public rootTags : string[];
   public jsonMapping: JSONMapping = null;
 
   constructor() {
+    super();
   }
 
   public supports(opt: string) {

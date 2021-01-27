@@ -1,4 +1,4 @@
-import { JSONMapping, SUPPORTS_EXT_EDITOR, SUPPORTS_FORK, SUPPORTS_MAPPING } from "@lezer-editor/lezer-editor-common";
+import { JSONMapping, SUPPORTS_EXT_EDITOR, SUPPORTS_FORK, SUPPORTS_ROOT_TAGS } from "@grammar-editor/grammar-editor-api";
 import { Fragment, h } from "preact";
 import { ForwardFn, forwardRef } from 'preact/compat';
 import { useEffect, useImperativeHandle, useRef, useState } from 'preact/hooks';
@@ -6,8 +6,8 @@ import Modal from 'react-modal';
 import { EditorGrammar, EditorGrammarUtils } from "../util/editorgrammar";
 import Button from "./button";
 import Dock from "react-osx-dock";
-import jsext from "../util/jsext";
 import { PopupManager } from "react-popup-manager";
+import JSExt from "../util/jsext";
 
 const OPT_NEW = "new";
 
@@ -31,7 +31,7 @@ const GrammarSelect: ForwardFn<{
 
     const openGrammarDetails = (grammarIdx) => {
         if (detailsPopup) {
-            jsext.showAlert(popupManager, 'Error', 'Already editing ...')
+            JSExt.showAlert(popupManager, 'Error', 'Already editing ...')
             return;
         }
         
@@ -103,6 +103,7 @@ const GrammarPopup : (props: GrammarPopupProps) => h.JSX.Element = ({isOpen, onC
 
     const refGrammarUrl = useRef<HTMLInputElement>(null);
     const refGrammarName = useRef<HTMLInputElement>(null);
+    const refRootTags = useRef<HTMLInputElement>(null);
     const refExtEditorEnabled = useRef<HTMLInputElement>(null);
     const refMapping = useRef<HTMLTextAreaElement>(null);
 
@@ -155,6 +156,16 @@ const GrammarPopup : (props: GrammarPopupProps) => h.JSX.Element = ({isOpen, onC
                 <label style={{color:'red', fontWeight: 'bolder'}}>* Grammar URL:</label>
                 <input ref={refGrammarUrl} value={state.grammar.url}></input>
                 {(() => {
+                    if (state.grammar.supports(SUPPORTS_ROOT_TAGS)) {
+                        return (<div>
+                            <label>Root Tags (comma separated):</label>
+                            <input ref={refRootTags} value={state.grammar.rootTags}></input>
+                        </div>);
+                    } else {
+                        return (<span></span>);
+                    }
+                })()}
+                {(() => {
                     if (state.grammar.supports(SUPPORTS_FORK)) {
                         return (<button>Fork</button>);
                     } else {
@@ -168,13 +179,14 @@ const GrammarPopup : (props: GrammarPopupProps) => h.JSX.Element = ({isOpen, onC
                         return (<span></span>);
                     }
                 })()}
-                {(() => {
+                {/* {(() => {
                     if (state.grammar.supports(SUPPORTS_MAPPING)) {
                         return (<textarea ref={refMapping} value={JSON.stringify(state.grammar.jsonMapping)} />);
                     } else {
                         return (<span></span>);
                     }
-                })()}
+                })()} */}
+                
             </div>
             <div className="button-bar">
                 <Button onClick={() => {doClose()}}>Cancel</Button>
@@ -192,7 +204,7 @@ const GrammarPopup : (props: GrammarPopupProps) => h.JSX.Element = ({isOpen, onC
                 }}>Duplicate</Button>
                 <Button onClick={() => {
                     if (state.grammar.isPredefined) {
-                        jsext.showAlert(popupManager, 'Error', 'Cannot delete predefined grammar ...')
+                        JSExt.showAlert(popupManager, 'Error', 'Cannot delete predefined grammar ...')
                     }
                     setState(s => {
                         const newGrammars = [...s.grammars].splice(s.grammarIdx, 1);

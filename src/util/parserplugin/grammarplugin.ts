@@ -1,8 +1,8 @@
-import { ASTIterator, ASTIterators, HydratedASTNode, HydratedASTNodeImpl, JSONMapping, CompileStatus, SimpleValue, GrammarEndpoint, GrammarAdapter } from '@lezer-editor/lezer-editor-common';
+import { EvalMode, ASTIterator, ASTIterators, HydratedASTNode, HydratedASTNodeImpl, JSONMapping, CompileStatus, SimpleValue, GrammarEndpoint, GrammarAdapter } from '@grammar-editor/grammar-editor-api';
 import jsext from '../jsext';
 
 const DEFAULT_JSON_MAPPING : JSONMapping = {
-  name: "name",
+  name: "type.name",
   start: "start", end: "end",
   skip: "skip",
   error: "error",
@@ -41,19 +41,20 @@ export default class GrammarPlugin {
     if (!this.grammarAdapter.eval) {
       return null;
     }
-    const v = await this.grammarAdapter.eval(this.clientId, rootTag, input, ctx);
+    const v = await this.grammarAdapter.eval(this.clientId, rootTag, input, EvalMode.RUN, ctx);
     return v;
   }
 
   async parse(rootTag: string, input: string): Promise<ASTIterator<HydratedASTNode>> {
-    if (!this.grammarAdapter.parse) {
+    if (!this.grammarAdapter.eval) {
       return null;
     }
-    const v = await this.grammarAdapter.parse(this.clientId, rootTag, input);
+    const v = await this.grammarAdapter.eval(this.clientId, rootTag, input, EvalMode.PARSE, {});
     if (!v) {
       throw Error(`Error parsing. ${jsext.toStr({input})}`);
     }
-    const r = this.mapValue(v, this.jsonMapping);
+    let r = v;
+    r = this.mapValue(v, this.jsonMapping || DEFAULT_JSON_MAPPING);
     return r;
   }
 
@@ -65,23 +66,26 @@ export default class GrammarPlugin {
   }
 
   private mapValue(v: any, jsonMapping: JSONMapping): ASTIterator<HydratedASTNode> {
-    return this.switchType<ASTIterator<HydratedASTNode>>(v, {
-      
-      Primitive: (value) => {
-        const node = new HydratedASTNodeImpl({name: 'value', value: value, start: 0, end: value.toString().length, children: []});
-        return ASTIterators.fromIdentity<HydratedASTNode>(node);
-      },
+    try {
+      return this.switchType<ASTIterator<HydratedASTNode>>(v, {
+        
+        Primitive: (value) => {
+          const node = new HydratedASTNodeImpl({name: 'value', value: value, start: 0, end: value.toString().length, children: []});
+          return ASTIterators.fromIdentity<HydratedASTNode>(node);
+        },
 
-      JSON: (value) => {
-        if (jsonMapping) {
-          const dontDehydrate = false;//in GrammarEditor, we work with hydrated nodes
-          jsonMapping = jsonMapping || DEFAULT_JSON_MAPPING;
-          return ASTIterators.fromJson(value, jsonMapping, dontDehydrate);
+        JSON: (value) => {
+          if (jsonMapping) {
+            const dontDehydrate = false;//in GrammarEditor, we work with hydrated nodes
+            return ASTIterators.fromJson(value, jsonMapping, dontDehydrate);
+          }
+          return null;
         }
-        return null;
-      }
 
-    });
+      });
+    } catch (e) {
+      throw Error('Mapping of value failed.');
+    }
   }
 
   private switchType<V>(v: any, 

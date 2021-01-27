@@ -1,60 +1,47 @@
-import { GrammarAdapter, GrammarEndpoint } from "@lezer-editor/lezer-editor-common";
-
-export enum EndpointType {
-    LIVE,
-    STATICJS
-}
+import { EndpointType, GrammarAdapter, GrammarEndpoint, ParseResult, EvalMode, OPTION_ENDPOINT_TYPE, OPTION_SUPPORTS, LiveEndpointPath, CompileStatus, OPTION_ROOT_TAGS } from "@grammar-editor/grammar-editor-api";
+import JSExt from "../jsext";
 
 enum MediaTypes {
     JSON = "application/json",
     JS = "application/javascript"
 }
 
-enum EndpointPath {
-    RECOMPILE = '/recompile',
-    EVAL = '/eval',
-    PARSE = '/parse',
-    GETOPTION = '/getOption'
-}
-
 interface SniffResult {
     type: EndpointType;
-    supportsRecompile: boolean;
+    supports: string[];
     url: string
 }
 
 export class GrammarAdapters {
-    static async sniff(url: string) : Promise<SniffResult> {
-        let supportsRecompile = false;
-        let r = await fetch(url + EndpointPath.RECOMPILE, {
-            method: 'HEAD'
+    static async sniff(clientId: string, url: string) : Promise<SniffResult> {
+        let ep = url;
+        let r = await JSExt.fetch(ep + LiveEndpointPath.OPT, {clientId, key: `${OPTION_ENDPOINT_TYPE},${OPTION_SUPPORTS}`}, {
+            method: 'GET'
         });
-        supportsRecompile = r.status == 200;
+        if (r && r.status == 200) {
+            const rs = await r.json();
+            if (rs.endpointType == EndpointType.LIVE) {
+                return {type: EndpointType.LIVE, supports: rs.supports, url: ep};
+            }
+        }
 
-        let ep = url + '/index.js';
-        r = await fetch(ep, {
-            method: 'HEAD'
+        //STATIC GRAMMAR ...
+        ep = url + '/index.js';
+        r = await JSExt.fetch(ep, {clientId}, {
+            method: 'HEAD'//HEAD is just GET without returning BODY
         });
-        if (r.status == 404) {
+        if (!r || r.status == 404) {
             ep = url + '/index.es.js';
-            r = await fetch(ep, {
+            r = await JSExt.fetch(ep, {clientId}, {
                 method: 'HEAD'
             });
         }
-        if (r.status == 200) {
-            if (r.headers['Content-Type'].includes(MediaTypes.JS)) {
-                return {type: EndpointType.STATICJS, supportsRecompile, url: ep};
-            }
-        } else if (r.status == 404) {//maybe a live grammar?
-            ep = url + '/';
-            r = await fetch(ep, {
-                method: 'HEAD'
-            });
-            if (r.headers['Content-Type'].includes(MediaTypes.JSON)) {
-                return {type: EndpointType.LIVE,  supportsRecompile, url: ep};
-            }
-        } 
-        throw Error('Invalid grammar endpoint: ' + ep);
+        if (r && r.status == 200 && r.headers['Content-Type']?.includes(MediaTypes.JS)) {
+            return {type: EndpointType.STATICJS, supports: [], url: ep};
+        }
+
+        console.log('Invalid grammar endpoint: ' + url);
+        throw Error('Invalid grammar endpoint: ' + url);
     }
 
     static liveEndpoint(url: string, supportsRecompile: boolean) {
@@ -64,6 +51,8 @@ export class GrammarAdapters {
     static staticEndpoint(url: string, supportsRecompile: boolean) {
         return new StaticEndpoint(url, supportsRecompile);
     }
+
+    
 }
 
 class LiveEndpoint implements GrammarEndpoint {
@@ -75,10 +64,10 @@ class LiveEndpoint implements GrammarEndpoint {
         if (!this.supportsRecompile) {
             throw Error('Attempt to call unsupported recompile.');
         }
-        const r = await fetch(this.url + EndpointPath.RECOMPILE, {
-            body: JSON.stringify({
-                clientId, grammar
-            }),
+        const r = await JSExt.fetch(this.url + LiveEndpointPath.RECOMPILE, {
+            clientId
+        }, {
+            body: grammar,
             method: 'POST'
         });
         if (r.status == 200) {
@@ -94,61 +83,50 @@ class LiveEndpoint implements GrammarEndpoint {
     async adapter(clientId: string) : Promise<GrammarAdapter> {
         const url = this.url;
         return new class implements GrammarAdapter {
-            async eval(clientId: string, rootTag: string, input: string, ctx: any): Promise<any> {
-                const r = await fetch(url + EndpointPath.EVAL, {
-                    body: JSON.stringify({
-                        clientId, rootTag, input, ctx
-                    }),
+            async eval(clientId: string, rootTag: string, input: string, mode: EvalMode, ctx: any): Promise<ParseResult> {
+                const r = await JSExt.fetch(url + LiveEndpointPath.EVAL, {
+                    clientId, rootTag, mode: String(mode)
+                }, {
+                    body: input,
                     method: 'POST'
                 });
                 if (r.status == 200) {
-                    return await r.json();
+                    const ret = await r.json();
+                    return ret;
                 }
                 if (r.status == 404) {//not available, skip
                     return null;
-                }
-                console.error(r.statusText);
-                throw Error('Parse cannot be executed');
-            }
-
-            async parse(clientId: string, rootTag: string, input: string): Promise<any> {
-                const r = await fetch(url + EndpointPath.PARSE, {
-                    body: JSON.stringify({
-                        clientId, rootTag, input
-                    }),
-                    method: 'POST'
-                });
-                if (r.status == 200) {
-                    return await r.json();
                 }
                 console.error(r.statusText);
                 throw Error('Parse cannot be executed');
             }
             
             async getOption(clientId: string, key: string): Promise<any> {
-                const r = await fetch(url + EndpointPath.GETOPTION, {
-                    headers: {
-                        'clientId': clientId,
-                        'key': key
-                    },
-                    method: 'HEAD'
+                const r = await JSExt.fetch(url + LiveEndpointPath.OPT, {
+                    clientId, key
+                }, {
+                    method: 'GET'
                 });
                 if (r.status == 200) {
-                    return r.headers['result'];
+                    const json = await r.json();
+                    return json[OPTION_ROOT_TAGS];
                 }
                 if (r.status == 404) {//not available, skip
                     return null;
                 }
-                console.error(r.statusText);
                 throw Error('Option cannot be retrieved: ' + key);
             }
         }
     }
 }
 
-class StaticEndpoint extends LiveEndpoint {
-    constructor (url: string, supportsRecompile: boolean) {
-        super(url, supportsRecompile);
+class StaticEndpoint implements GrammarEndpoint {
+    constructor (protected url: string, protected supportsRecompile: boolean) {
+        
+    }
+
+    async recompile(clientId: string, grammar: string) : Promise<CompileStatus> {
+        throw Error('Attempt to call unsupported recompile.');
     }
 
     async adapter(clientId: string) {

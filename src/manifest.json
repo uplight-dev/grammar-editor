@@ -1,6 +1,6 @@
 {
-  "name": "lezer-editor",
-  "short_name": "lezer-editor",
+  "name": "grammar-editor",
+  "short_name": "grammar-editor",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

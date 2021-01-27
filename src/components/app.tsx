@@ -16,6 +16,7 @@ import Toggle from 'react-toggle'
 
 const App: FunctionalComponent<any> = ({popupManager}) => {
     // let currentUrl: string;
+    let [inited, setInited] = useState(false);
     let [grammarShown, setGrammarShown] = useState(false);
     const [storeState, storeActions] = useStore();
     const [state, setState] = useState({notifyShow: null})
@@ -29,7 +30,8 @@ const App: FunctionalComponent<any> = ({popupManager}) => {
     },[])
 
     useEffect(() => {
-        if (!storeState.grammar) {
+        if (!inited) {
+            setInited(true);
             storeActions.init();
         }
     }, [storeState, storeActions]);
@@ -105,7 +107,7 @@ const Header = ({popupManager}) => {
         <img src={icon} style={{width:32, height:32}} />
         <span>Lezer Editor </span>
         <a target="_blank" className="grammar-url"
-            href={storeState.grammars[storeState.repoIdx].url}>{storeState.grammars[storeState.repoIdx].url}
+            href={storeState.grammar?.url}>{storeState.grammar?.url}
         </a>
         <div style={{marginLeft:'auto', marginRight: '10px'}}>
             <Button onClick={() => {

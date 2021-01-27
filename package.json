@@ -1,6 +1,6 @@
 {
     "private": true,
-    "name": "lezer-editor",
+    "name": "grammar-editor",
     "version": "1.0.0",
     "license": "MIT",
     "author": "upslash-dev <upslash.dev@gmail.com>",
@@ -19,12 +19,14 @@
         "build/*"
     ],
     "dependencies": {
-        "@lezer-editor/lezer-editor-common": "^1.0.0",
+        "@fingerprintjs/fingerprintjs": "^3.0.5",
+        "@grammar-editor/grammar-editor-api": "^1.0.0",
         "@types/codemirror": "^0.0.98",
         "classnames": "^2.2.6",
         "clsx": "^1.1.1",
         "codemirror": "^5.58.2",
         "gridstack": "^2.2.0",
+        "immer": "^8.0.0",
         "lodash-es": "^4.17.15",
         "node-json-transform": "^1.1.1",
         "path": "^0.12.7",
