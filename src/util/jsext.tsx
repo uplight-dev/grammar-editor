@@ -17,6 +17,15 @@ export default class JSExt {
         return JSON.stringify(o, null, 2);
     }
 
+    static set<T>(payload: Partial<T>, dest: Partial<T>) {
+        for (const key in payload) {
+          if (dest.hasOwnProperty(key)) {
+            dest[key] = payload[key];
+          }
+        }
+        return dest;
+    }
+
     static copy(text: string) {
         var input = document.createElement('textarea');
         input.innerHTML = text;

@@ -226,6 +226,9 @@ body {
     height: 100%;
 }
 
+textarea {
+    margin: 10px;
+}
 
 /* BUTTONS */
 
@@ -237,7 +240,7 @@ body {
     align-items: center;
 }
 
-button {
+.styledButton {
     color: #444444;
     background: #F3F3F3;
     border: 1px #DADADA solid;
@@ -248,64 +251,64 @@ button {
     outline: none;
 }
 
-button:hover {
+.styledButton:hover {
     border: 1px #C6C6C6 solid;
     box-shadow: 1px 1px 1px #EAEAEA;
     color: #333333;
     background: #F7F7F7;
 }
 
-button:active {
+.styledButton:active {
     box-shadow: inset 1px 1px 1px #DFDFDF;
 }
 
-button.blue {
+.styledButton.blue {
     color: white;
     background: #4C8FFB;
     border: 1px #3079ED solid;
     box-shadow: inset 0 1px 0 #80B0FB;
 }
 
-button.blue:hover {
+.styledButton.blue:hover {
     border: 1px #2F5BB7 solid;
     background: #3F83F1;
 }
 
-button.blue:active {
+.styledButton.blue:active {
     box-shadow: inset 0 2px 5px #2370FE;
 }
 
-button.orange {
+.styledButton.orange {
     color: white;
     border: 1px solid #FB8F3D;
     background-image: linear-gradient(0deg, #FDA251 0%, #FB8F3D 100%);
 }
 
-button.orange:hover {
+.styledButton.orange:hover {
     border: 1px solid #EB5200;
     background-image: linear-gradient(0deg, #FD924C 0%, #F9760B 100%);
 }
 
-button.orange:active {
+.styledButton.orange:active {
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 
 /* Red Google Button as seen on drive.google.com */
 
-button.red {
+.styledButton.red {
     background-image: linear-gradient(0deg, #DD4B39 0%, #D14836 100%);
     border: 1px solid #DD4B39;
     color: white;
     text-shadow: 0 1px 0 #C04131;
 }
 
-button.red:hover {
+.styledButton.red:hover {
     background-image: linear-gradient(0deg, #DD4B39 0%, #C53727 100%);
     border: 1px solid #AF301F;
 }
 
-button.red:active {
+.styledButton.red:active {
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.8);
     background-image: linear-gradient(0deg, #D74736 0%, #AD2719 100%);
 }

@@ -30,7 +30,7 @@ export default class GrammarLoader {
             }
             return this.parserPlugin;
         } catch (e) {
-            console.error('Error loading grammar: ' + e)
+            console.error('Error loading grammar\n' + e)
             throw e;
         }
     }

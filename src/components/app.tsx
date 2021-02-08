@@ -8,7 +8,7 @@ import GrammarEditor from "./grammareditor";
 import TabListExt from './tablistext';
 import GrammarComponent from "./grammarinspector";
 import icon from '../assets/icons/lezer.png'
-import Button from "./button";
+import StyledButton from "./styledbutton";
 import Notifications, {notify} from 'react-notify-toast';
 import jsext from "../util/jsext";
 import "react-toggle/style.css"
@@ -48,7 +48,7 @@ const App: FunctionalComponent<any> = ({popupManager}) => {
                 }}>
                     <TabListExt title={(<Header popupManager={popupManager}></Header>)}>
                         <Tab>Inspect</Tab>
-                        <Tab>Grammar</Tab>
+                        <Tab>Grammars</Tab>
                     </TabListExt>
 
                     <div style={{height: 'calc(100% - 30px)'}}>
@@ -91,7 +91,7 @@ const Header = ({popupManager}) => {
                 <div style={{width: '800px', height: '400px'}}>
                     <textarea ref={txtRef} value={storeState.shareStr} style={{width: '100%', height: 'calc(100% - 50px)'}}></textarea>
                     <div className="button-bar" style={{height: '50px'}}>
-                        <Button style={{width: '100px'}} onClick={(e) => {storeActions.import(txtRef.current.value, includeLayout); onClose();}}>Import</Button>
+                        <StyledButton style={{width: '100px'}} onClick={(e) => {storeActions.import(txtRef.current.value, includeLayout); onClose();}}>Import</StyledButton>
                         <Toggle
                                 id="include-layout"
                                 checked={includeLayout}
@@ -107,14 +107,14 @@ const Header = ({popupManager}) => {
         <img src={icon} style={{width:32, height:32}} />
         <span>Lezer Editor </span>
         <a target="_blank" className="grammar-url"
-            href={storeState.grammar?.url}>{storeState.grammar?.url}
+            href={storeState.editorGrammar?.grammar.url}>{storeState.editorGrammar?.grammar.url}
         </a>
         <div style={{marginLeft:'auto', marginRight: '10px'}}>
-            <Button onClick={() => {
+            <StyledButton onClick={() => {
                 popupManager.open(ImportPopup);
             }
-            }>Import</Button>
-            <Button className="orange" onClick={copy}>Export</Button>
+            }>Import</StyledButton>
+            <StyledButton className="orange" onClick={copy}>Export</StyledButton>
         </div>
     </span>)
 }

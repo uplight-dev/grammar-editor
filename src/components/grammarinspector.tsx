@@ -8,14 +8,14 @@ import { Ref, useEffect, useRef, useState } from "preact/hooks";
 import Toggle from 'react-toggle';
 import { Stack } from 'stack-typescript';
 import { DEF_LAYOUT, useStore } from '../ctx/ctx';
-import Button from './button';
+import StyledButton from './styledbutton';
 import CodeMirrorExt from './codemirrorext';
 import { TreeNode } from './treenode';
 
 const GrammarInspector: FunctionalComponent<any> = () => {
   const [storeState, storeActions] = useStore();
 
-  if (!storeState.grammar) {
+  if (!storeState.editorGrammar) {
     return (<div style="width: 100%; height: 100%; display:flex; justify-content:center; align-items: center; font-size: 2em">
     <span style="background-color: yellow">Loading ...</span>
     </div>);
@@ -186,7 +186,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
     const tokens: ASTNode[] = [];
     let firstErr = null;
 
-    const tree = await storeState.grammar.plugin.parse(grammarTag, expression, storeState.grammar.jsonMapping);
+    const tree = await storeState.editorGrammar.plugin.parse(grammarTag, expression, storeState.editorGrammar.grammar.jsonMapping);
 
     if (tree != null) {
       tree.traverse({//hydrate the ASTNode even further with errors, etc.
@@ -261,7 +261,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
       if (!state.tree) {
         return;
       }
-      let output = storeState.grammar.plugin.eval(grammarTag, expression, context);
+      let output = storeState.editorGrammar.plugin.eval(grammarTag, expression, context);
       if (!output) {
         throw Error(`Cannot evaluate expression: ${expression}.`);
       }
@@ -305,7 +305,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
       //why?! need to clone spread arr otherwise err: Cannot assign to read only property '0' of object '[object Array]'
       grid.load([...storeState.layout]);
     }
-    _(s => ({grid: grid}));
+    _(s => ({grid}));
 
     grid.on('change', () => onLayoutChange(grid));
   }, []);
@@ -377,7 +377,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
   useEffect(() => {
     console.log('Grammar changed!')
     updateStack(storeState.grammarTag, storeState.expression, storeState.contextStr, state.syntaxHighlight);
-  }, [storeState.grammar])
+  }, [storeState.editorGrammar])
 
   return (
     <div style={{overflowX:'hidden', overflowY: 'auto', height: '100%'}}>
@@ -403,7 +403,7 @@ const GrammarInspector: FunctionalComponent<any> = () => {
                 checked={state.layouting}
                 onChange={() => {_(s => ({layouting: !s.layouting, layoutingClassName: !s.layouting ? 'layouting': ''}))}} />
               <label htmlFor='layouting-toggle'>{state.layouting ? "Editable" : "Static"}</label>
-              <Button className="orange" onClick={() => {storeState.notifyShow('Layout reset to default values!', 'success');storeActions.setLayout(DEF_LAYOUT);}}>Reset</Button>
+              <StyledButton className="orange" onClick={() => {storeState.notifyShow('Layout reset to default values!', 'success');storeActions.setLayout(DEF_LAYOUT);}}>Reset</StyledButton>
             </div>
 
           </div>

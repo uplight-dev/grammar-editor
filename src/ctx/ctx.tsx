@@ -1,18 +1,16 @@
-import { JSONMapping, OPTION_ROOT_TAGS } from '@grammar-editor/grammar-editor-api';
-import { defaults, createHook, createStore } from 'react-sweet-state';
+import { OPTION_ROOT_TAGS } from '@grammar-editor/grammar-editor-api';
+import { produce } from 'immer';
+import { createHook, createStore, defaults } from 'react-sweet-state';
 import store from 'store';
-import uuid from 'uuid/v4';
-import { DEFAULT_JSON_MAPPING, EditorGrammar, EditorGrammarUtils, Grammar } from '../util/editorgrammar';
-import jsext from '../util/jsext';
-import GrammarLoader from '../util/parserplugin/loader';
-import {produce} from 'immer';
-import JSExt from '../util/jsext';
+import { EditorGrammar, EditorGrammarUtils, Grammar } from '../util/editorgrammar';
+import { default as jsext, default as JSExt } from '../util/jsext';
+import GrammarLoader from '../util/grammarplugin/loader';
 
 defaults.mutator = (currentState, producer) => {
     const r = produce(currentState, producer);
     return r;
 };
-defaults.batchUpdates = false;
+defaults.batchUpdates = true;
 
 export const DEF_LAYOUT = [
     {
@@ -69,9 +67,17 @@ const PREDEFINED_GRAMMARS : Grammar[] = [
         error: "error",
         value: "value",
         children: "children"
-    }, [], true),
-    new Grammar('Peg.js', 'https://cdn.jsdelivr.net/npm/@grammar-editor/lezer-example-grammar@1.0.1/dist', true),
-    new Grammar('Chevrotain', 'https://cdn.jsdelivr.net/npm/@grammar-editor/lezer-example-grammar@1.0.1/dist', true)
+    }, null, true),
+    new Grammar('Peg.js', 'http://localhost:3000', {
+        name: "name",
+        start: "start", end: "end",
+        skip: "skip",
+        error: "error",
+        value: "value",
+        children: "children"
+    }, null, true),
+    new Grammar('Chevrotain', 'https://cdn.jsdelivr.net/npm/@grammar-editor/lezer-example-grammar@1.0.1/dist', null, null, true),
+
 ];
 
 const actions = {
@@ -91,21 +97,25 @@ const actions = {
         dispatch(actions0.grammarsLoaded());
     },
 
-    addGrammarByUrl: (url: string, jsonMapping: JSONMapping) => async (props: StoreProps) => {
+    addGrammarByUrl: (url: string) => async (props: StoreProps) => {
         const {getState, dispatch} = props;
-        const grammarPlugin = await getState().grammarLoader.load(url, jsonMapping);
-        const grammar = await EditorGrammarUtils.from(url, grammarPlugin);
-        const grammars = [grammar, ...getState().grammars];
+        try {
+            const grammarPlugin = await getState().grammarLoader.load(url);
+            const editorGrammar = await EditorGrammarUtils.from(url, grammarPlugin);
+            const editorGrammars = [editorGrammar, ...getState().editorGrammars];
 
-        dispatch(actions.setGrammars(grammars))
-        dispatch(actions.setGrammarIdx(0));
+            dispatch(actions.setGrammars(editorGrammars))
+            dispatch(actions.setGrammarIdx(0));
+        } catch (e) {
+            getState().notifyShow(`Error loading grammar from: ${url}`, 'error')
+        }
     },
 
-    setGrammars: (grammars) => async (props: StoreProps) => {
+    setGrammars: (editorGrammars) => async (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
         setState(s => ({
             ...s,
-            grammars
+            editorGrammars
         }));
         dispatch(actions.stateToStorage())
     },
@@ -117,33 +127,37 @@ const actions = {
     //     await grammarChanged(grammar, props)
     // },
 
-    addGrammar: (grammar: EditorGrammar) => async (props: StoreProps) => {
+    addGrammar: (editorGrammar: EditorGrammar) => async (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
-        const ret = [grammar, ...getState().grammars];
+        const ret = [...getState().editorGrammars, editorGrammar];
 
         dispatch(actions.setGrammars(ret));
-        dispatch(actions.setGrammarIdx(0));
     },
 
-    updateGrammar: (idx: number, grammar : EditorGrammar) => async (props: StoreProps) => {
+    updateGrammar: (editorGrammarIdx: number, editorGrammar : EditorGrammar) => async (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
-        const grammars = [...getState().grammars];
-        grammars[idx] = grammar;
+        const editorGrammars = [...getState().editorGrammars];
+        editorGrammars[editorGrammarIdx] = editorGrammar;
 
         setState(s => ({
             ...s,
-            grammars
+            editorGrammars
         }))
-        if (idx == getState().grammarIdx) {
-            //dispatch(actions0.activeGrammarChanged(idx));
+        if (editorGrammarIdx == getState().editorGrammarIdx) {
+            dispatch(actions0.activeGrammarChanged());
         }
         dispatch(actions.stateToStorage())
     },
 
-    setGrammarIdx: (idx: number) => async (props: StoreProps) => {
-        const {dispatch} = props;
+    setGrammarIdx: (editorGrammarIdx: number) => async (props: StoreProps) => {
+        const {dispatch, setState} = props;
+
+        setState(s => ({
+            ...s,
+            editorGrammarIdx
+        }));
         
-        dispatch(actions0.activeGrammarChanged(idx));
+        dispatch(actions0.activeGrammarChanged());
         dispatch(actions.stateToStorage())
     },
 
@@ -169,7 +183,7 @@ const actions = {
         const {setState, getState, dispatch} = props;
         setState(s => ({
             ...s,
-            layout
+            layout: [...layout]
         }));
         dispatch(actions.stateToStorage())
         getState().notifyShow('Layout saved!', 'success')
@@ -179,7 +193,7 @@ const actions = {
         const {setState, getState, dispatch} = props;
         setState( s => ({
             ...s,
-            notifyShow: notifyShow
+            notifyShow
         }));
     },
 
@@ -187,7 +201,7 @@ const actions = {
         try {
             const {setState, getState, dispatch} = props;
             let data = JSON.parse(dataStr);
-            data = filterSharableState(data);
+            data = mapSharableState(data, true);
             if (!includeLayout) {
                 data.layout = null;
             }
@@ -201,14 +215,14 @@ const actions = {
 
     export: () => (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
-        let data = filterSharableState(getState());
+        let data = mapSharableState(getState() , false);
         let dump = JSON.stringify(data, null, 2)
         return dump;
     },
     
     stateToStorage: () => (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
-        let data = filterPersistentState(getState());
+        let data = mapPersistentState(getState(), false);
         store.set('dataStr', JSON.stringify(data));
     }
 }
@@ -220,9 +234,9 @@ const Store = createStore({
         expression: 'var1 = "hello world";\nprint(var1)',
         contextStr: JSON.stringify({person: {name: 'John', surname: 'Doe'}}),
         predefinedGrammars: PREDEFINED_GRAMMARS,
-        grammars: [],
-        grammarIdx: 0,
-        grammar: null,
+        editorGrammars: [],
+        editorGrammarIdx: 0,
+        editorGrammar: null,
         grammarTag: null,
         grammarTags: [],
         grammarLoader: null,
@@ -248,7 +262,7 @@ const actions0 = {
             } else {
                 data = dataObj;
             }
-            state = data;
+            state = mapPersistentState(data, true);
         }
         setState(s => ({...s, ...state}));
     },
@@ -256,71 +270,84 @@ const actions0 = {
     grammarsLoaded: () => (props: StoreProps) => {
         const {getState, setState, dispatch} = props;
 
-        let { grammars } = getState();
-        grammars = [...grammars];
-        const hasPredefined = grammars.find(g => g.isPredefined);
+        let { editorGrammars } = getState();
+        editorGrammars = [...editorGrammars];
+        const hasPredefined = editorGrammars.find(eg => eg.grammar.predefined);
         if (!hasPredefined) {
             [...getState().predefinedGrammars].reverse().forEach(g => {
-                const ng = EditorGrammar.build(g).set({isPredefined : false});
-                grammars.unshift(ng);
+                const neg = EditorGrammarUtils.fromGrammar(g);
+                editorGrammars.unshift(neg);
             })
         }
-        setState(s => ({...s, grammars}));
+        setState(s => ({...s, editorGrammars}));
 
-        dispatch(actions0.activeGrammarChanged(getState().grammarIdx));
+        dispatch(actions0.activeGrammarChanged());
     },
     
-    activeGrammarChanged: (grammarIdx: number) => async (props: StoreProps) => {
+    activeGrammarChanged: () => async (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
 
-        if (getState().grammars.length == 0) {
+        if (getState().editorGrammars.length == 0) {
             setState(s => ({
                 ...s,
-                grammar: null,
+                editorGrammar: null,
                 grammarTags : [],
                 grammarTag: null
             }))
             return;
         }
-    
-        const grammar = getState().grammars[grammarIdx];
-        //attempt to load plugin ...
-        if (!grammar.plugin) {
-            const grammarPlugin = await getState().grammarLoader.load(grammar.url, grammar.jsonMapping);
-            grammar.plugin = grammarPlugin;
+
+        const eg = getState().editorGrammars[getState().editorGrammarIdx];
+        try {
+            //attempt to load plugin ...
+            if (!eg.plugin) {
+                const grammarPlugin = await getState().grammarLoader.load(eg.grammar.url);
+                eg.plugin = grammarPlugin;
+            }
+            const grammarTags = [...await eg.plugin.getOption(OPTION_ROOT_TAGS)];
+
+            setState(s => {            
+                return {
+                    ...s,
+                    editorGrammar: eg,
+                    grammarTags,
+                    grammarTag: grammarTags?.length > 0 && grammarTags[0]
+                };
+            });
+            dispatch(actions.stateToStorage())
+        } catch (e) {
+            eg.loadError = true;
+            getState().notifyShow(`Error loading grammar from: ${eg.grammar.url}`, 'error')
         }
-        const grammarTags = [...await grammar.plugin.getOption(OPTION_ROOT_TAGS)];
-        
-        setState(s => ({
-            ...s,
-            grammar,
-            grammarTags,
-            grammarTag: grammarTags?.length > 0 && grammarTags[0]
-        }))
-        dispatch(actions.stateToStorage())
     }    
 }
 
-function filterPersistentState(state: any) {
+function mapPersistentState(obj: any, isLoaded: boolean) {
+    const editorGrammars = obj.editorGrammars.map(eg => {
+        return isLoaded? EditorGrammarUtils.build({grammar: eg.grammar}) : {grammar: eg.grammar};
+    });
     return {
-        clientId: state.clientId,
-        expression: state.expression,
-        contextStr: state.contextStr,
-        grammarTag: state.grammarTag,
-        repos: state.repos,
-        repoIdx: state.repoIdx,
-        layout: state.layout
+        clientId: obj.clientId,
+        expression: obj.expression,
+        contextStr: obj.contextStr,
+        grammarTag: obj.grammarTag,
+        editorGrammars,
+        editorGrammarIdx: obj.editorGrammarIdx,
+        layout: obj.layout
     }
 }
 
-function filterSharableState(state: any) {
+function mapSharableState(obj: any, isLoaded: boolean) {
+    const editorGrammars = obj.editorGrammars.map(eg => {
+        return isLoaded? EditorGrammarUtils.build({grammar: eg.grammar}) : {grammar: eg.grammar};
+    });
     return {
-        expression: state.expression,
-        contextStr: state.contextStr,
-        grammarTag: state.grammarTag,
-        repos: state.repos,
-        repoIdx: state.repoIdx,
-        layout: state.layout
+        expression: obj.expression,
+        contextStr: obj.contextStr,
+        grammarTag: obj.grammarTag,
+        editorGrammars,
+        editorGrammarIdx: obj.editorGrammarIdx,
+        layout: obj.layout
     }
 }
 
@@ -330,9 +357,9 @@ interface StoreType {
     expression: string,
     contextStr: string,
     predefinedGrammars: Grammar[],
-    grammars: EditorGrammar[],
-    grammarIdx: number,
-    grammar: EditorGrammar,
+    editorGrammars: EditorGrammar[],
+    editorGrammarIdx: number,
+    editorGrammar: EditorGrammar,
     grammarTag: string,
     grammarTags: string[],
     grammarLoader: GrammarLoader,

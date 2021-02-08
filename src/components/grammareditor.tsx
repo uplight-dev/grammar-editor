@@ -1,9 +1,9 @@
 import { FunctionalComponent, h, Ref } from "preact";
-import { useRef } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { withPopups } from "react-popup-manager";
 import { useStore } from "../ctx/ctx";
 import { EditorGrammar } from "../util/editorgrammar";
-import Button from './button';
+import StyledButton from './styledbutton';
 import GrammarSelect, { Handles as GrammarSelectHandles } from './grammarselect';
 
 const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
@@ -16,6 +16,7 @@ const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
   
   const onSave = (grammars: EditorGrammar[], grammarIdx: number) => {
     storeActions.setGrammars(grammars)
+    storeActions.setGrammarIdx(grammarIdx);
   }
 
   return (
@@ -23,21 +24,24 @@ const GrammarEditor: FunctionalComponent<any> = ({popupManager}) => {
       <div className="hcontainer flex-vcenter" style={{ height: '30px'}}>
           <span>Grammar</span>
           <GrammarSelect style={{ width: '1000px' }} ref={refGrammars} popupManager={popupManager} 
-            grammars={storeState.grammars}
+            editorGrammarIdx={storeState.editorGrammarIdx}
+            editorGrammars={storeState.editorGrammars}
             onSelect={onSelect} onSave={onSave} />
-          <Button onClick={() => {if (refGrammars.current) refGrammars.current.openGrammarDetails(storeState.grammarIdx)}}>Edit</Button>
-          <Button onClick={async () => {await onSelect(storeState.grammarIdx)}}>Reload</Button>
+            <span className="styled-buttons">
+              <StyledButton onClick={() => {if (refGrammars.current) refGrammars.current.openGrammarDetails(storeState.editorGrammarIdx)}}>Edit</StyledButton>
+              <StyledButton onClick={async () => {await onSelect(storeState.editorGrammarIdx)}}>Reload</StyledButton>
+            </span>
       </div>
       {
-        storeState.grammar.externalEditorEnabled && 
+        storeState.editorGrammar && storeState.editorGrammar.externalEditorEnabled && 
         (<iframe height="100%" width="100%" 
-          src={storeState.grammar.externalEditorUrl + '?lite=true'} scrolling="no" frameBorder={0} allowTransparency={true} allowFullScreen={true} sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-modals"></iframe>
+          src={storeState.editorGrammar.externalEditorUrl + '?lite=true'} scrolling="no" frameBorder={0} allowTransparency={true} allowFullScreen={true} sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-modals"></iframe>
         )
       }
       {
-        !storeState.grammar.externalEditorEnabled &&
+        storeState.editorGrammar && !storeState.editorGrammar.externalEditorEnabled &&
         (
-          <textarea height="100%" width="100%" />
+          <textarea style={{width: '100%', height: '100%'}} />
         )
       }
     </div>
