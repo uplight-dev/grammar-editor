@@ -1,91 +1,16 @@
-import { OPTION_ROOT_TAGS } from '@grammar-editor/grammar-editor-api';
-import { produce } from 'immer';
-import { createHook, createStore, defaults } from 'react-sweet-state';
+import { OPTION_ROOT_TAGS } from "@grammar-editor/grammar-editor-api";
 import store from 'store';
-import { EditorGrammar, EditorGrammarUtils, Grammar } from '../util/editorgrammar';
-import { default as jsext, default as JSExt } from '../util/jsext';
-import GrammarLoader from '../util/grammarplugin/loader';
+import { EditorGrammar, EditorGrammarUtils } from '../util/editorgrammar';
+import GrammarLoader from "../util/grammarplugin/loader";
+import JSExt from "../util/jsext";
+import { StoreProps } from './store';
 
-defaults.mutator = (currentState, producer) => {
-    const r = produce(currentState, producer);
-    return r;
-};
-defaults.batchUpdates = true;
-
-export const DEF_LAYOUT = [
-    {
-      "x": 0,
-      "y": 0,
-      "width": 12,
-      "height": 1,
-      "minWidth": 3,
-      "maxHeight": 1,
-      "id": "grid-cfg"
-    },
-    {
-      "x": 0,
-      "y": 1,
-      "width": 6,
-      "height": 2,
-      "id": "grid-codeEditor"
-    },
-    {
-      "x": 6,
-      "y": 1,
-      "width": 6,
-      "height": 11,
-      "id": "grid-tree"
-    },
-    {
-      "x": 0,
-      "y": 3,
-      "width": 6,
-      "height": 11,
-      "id": "grid-context"
-    },
-    {
-      "x": 6,
-      "y": 12,
-      "width": 2,
-      "height": 2,
-      "id": "grid-output"
-    },
-    {
-      "x": 8,
-      "y": 12,
-      "width": 4,
-      "height": 2,
-      "id": "grid-outputErr"
-    }
-  ];
-
-const PREDEFINED_GRAMMARS : Grammar[] = [
-    new Grammar('Lezer', 'http://localhost:3000', {
-        name: "name",
-        start: "start", end: "end",
-        skip: "skip",
-        error: "error",
-        value: "value",
-        children: "children"
-    }, null, true),
-    new Grammar('Peg.js', 'http://localhost:3000', {
-        name: "name",
-        start: "start", end: "end",
-        skip: "skip",
-        error: "error",
-        value: "value",
-        children: "children"
-    }, null, true),
-    new Grammar('Chevrotain', 'https://cdn.jsdelivr.net/npm/@grammar-editor/lezer-example-grammar@1.0.1/dist', null, null, true),
-
-];
-
-const actions = {
+const Actions = {
     init: () => async (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
 
         //load grammar
-        dispatch(actions0.localStorageReload());
+        dispatch(Actions0.localStorageReload());
         //init
         const clientId = getState().clientId || await JSExt.getFingerprintID();
         setState(s => ({
@@ -94,7 +19,7 @@ const actions = {
              grammarLoader: new GrammarLoader(clientId)
         }));
         //notify updates
-        dispatch(actions0.grammarsLoaded());
+        dispatch(Actions0.grammarsLoaded());
     },
 
     addGrammarByUrl: (url: string) => async (props: StoreProps) => {
@@ -104,8 +29,8 @@ const actions = {
             const editorGrammar = await EditorGrammarUtils.from(url, grammarPlugin);
             const editorGrammars = [editorGrammar, ...getState().editorGrammars];
 
-            dispatch(actions.setGrammars(editorGrammars))
-            dispatch(actions.setGrammarIdx(0));
+            dispatch(Actions.setGrammars(editorGrammars))
+            dispatch(Actions.setGrammarIdx(0));
         } catch (e) {
             getState().notifyShow(`Error loading grammar from: ${url}`, 'error')
         }
@@ -117,7 +42,7 @@ const actions = {
             ...s,
             editorGrammars
         }));
-        dispatch(actions.stateToStorage())
+        dispatch(Actions.stateToStorage())
     },
 
     // setGrammarByUrl: async (url: string) => async (props: StoreProps) => {
@@ -131,22 +56,23 @@ const actions = {
         const {setState, getState, dispatch} = props;
         const ret = [...getState().editorGrammars, editorGrammar];
 
-        dispatch(actions.setGrammars(ret));
+        dispatch(Actions.setGrammars(ret));
     },
 
-    updateGrammar: (editorGrammarIdx: number, editorGrammar : EditorGrammar) => async (props: StoreProps) => {
+    updateCurrentGrammar: (fn: (eg: EditorGrammar) => void) => async (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
-        const editorGrammars = [...getState().editorGrammars];
-        editorGrammars[editorGrammarIdx] = editorGrammar;
 
-        setState(s => ({
+        setState(s => {
+            const editorGrammars = [...getState().editorGrammars];
+            fn(editorGrammars[s.editorGrammarIdx]);
+
+            return {
             ...s,
             editorGrammars
-        }))
-        if (editorGrammarIdx == getState().editorGrammarIdx) {
-            dispatch(actions0.activeGrammarChanged());
-        }
-        dispatch(actions.stateToStorage())
+            }
+        })
+        dispatch(Actions0.activeGrammarChanged());
+        dispatch(Actions.stateToStorage())
     },
 
     setGrammarIdx: (editorGrammarIdx: number) => async (props: StoreProps) => {
@@ -157,8 +83,55 @@ const actions = {
             editorGrammarIdx
         }));
         
-        dispatch(actions0.activeGrammarChanged());
-        dispatch(actions.stateToStorage())
+        dispatch(Actions0.activeGrammarChanged());
+        dispatch(Actions.stateToStorage())
+    },
+
+    reloadGrammar: (editorGrammarIdx: number) => async (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
+
+        setState(s => {
+            
+            return {
+                ...s
+            }
+        });
+    },
+
+    duplicateGrammar: (editorGrammarIdx: number) => async (props : StoreProps) => {
+        const {setState, getState, dispatch} = props;
+        
+        const copy = EditorGrammarUtils.clone(getState().editorGrammars[editorGrammarIdx]);
+        copy.grammar.predefined = false;
+        dispatch(Actions.setGrammars([...getState().editorGrammars, copy]));
+        dispatch(Actions.setGrammarIdx(getState().editorGrammars.length-1));
+        getState().notifyShow('Grammar Duplicated!', 'success')
+    },
+
+    deleteGrammar: (editorGrammarIdx: number) => async (props : StoreProps) => {
+        const {setState, getState, dispatch} = props;
+
+        if (getState().editorGrammars.length == 1) {
+            JSExt.showAlert(getState().popupManager, 'Error', 'At least a grammar needs to remain ...')
+            return;
+        }
+        if (getState().editorGrammar.grammar.predefined) {
+            JSExt.showAlert(getState().popupManager, 'Error', 'Cannot delete predefined grammar ...')
+            return;
+        }
+        setState(s => {
+            const newGrammars = [...s.editorGrammars];
+            newGrammars.splice(editorGrammarIdx, 1);
+            const idx = Math.max(0, getState().editorGrammarIdx - 1);
+            
+            getState().notifyShow('Grammar Deleted!', 'success')
+            return {
+                ...s,
+                editorGrammarIdx: idx,
+                editorGrammar: newGrammars[idx],
+                editorGrammars: newGrammars,
+            }
+        })
     },
 
     setExpression: (expr) => (props: StoreProps) => {
@@ -167,7 +140,7 @@ const actions = {
             ...s,
             expression: expr
         }));
-        dispatch(actions.stateToStorage())
+        dispatch(Actions.stateToStorage())
     },
     
     setContextStr: (contextStr) => (props: StoreProps) => {
@@ -176,7 +149,7 @@ const actions = {
             ...s,
             contextStr: contextStr
         }));
-        dispatch(actions.stateToStorage())
+        dispatch(Actions.stateToStorage())
     },
 
     setLayout: (layout) => (props: StoreProps) => {
@@ -185,16 +158,8 @@ const actions = {
             ...s,
             layout: [...layout]
         }));
-        dispatch(actions.stateToStorage())
+        dispatch(Actions.stateToStorage())
         getState().notifyShow('Layout saved!', 'success')
-    },
-
-    setNotifyShow: (notifyShow) => (props: StoreProps) => {
-        const {setState, getState, dispatch} = props;
-        setState( s => ({
-            ...s,
-            notifyShow
-        }));
     },
 
     import: (dataStr, includeLayout) => (props: StoreProps) => {
@@ -206,7 +171,7 @@ const actions = {
                 data.layout = null;
             }
             localStorage.setItem('dataStr', JSON.stringify(data))
-            dispatch(actions0.grammarsLoaded())
+            dispatch(Actions0.grammarsLoaded())
             props.getState().notifyShow('Import successfull', 'success')
         } catch (e) {
             console.log('Cannot import! ' + e)
@@ -224,38 +189,34 @@ const actions = {
         const {setState, getState, dispatch} = props;
         let data = mapPersistentState(getState(), false);
         store.set('dataStr', JSON.stringify(data));
+    },
+
+    setNotifyShow: (notifyShow) => (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
+        setState( s => ({
+            ...s,
+            notifyShow
+        }));
+    },
+
+    setPopupManager: (popupManager) => (props: StoreProps) => {
+        const {setState, getState, dispatch} = props;
+        setState( s => ({
+            ...s,
+            popupManager
+        }));
     }
 }
 
-const Store = createStore({
-    initialState: {
-        clientId: null,
-        shareStr: null,
-        expression: 'var1 = "hello world";\nprint(var1)',
-        contextStr: JSON.stringify({person: {name: 'John', surname: 'Doe'}}),
-        predefinedGrammars: PREDEFINED_GRAMMARS,
-        editorGrammars: [],
-        editorGrammarIdx: 0,
-        editorGrammar: null,
-        grammarTag: null,
-        grammarTags: [],
-        grammarLoader: null,
-        notifyShow: (...args) => {console.warn('Notify not inited yet ...')},
-        layout: DEF_LAYOUT
-    } as StoreType,
-    actions,
-    name: 'store'
-});
-
-const actions0 = {    
+const Actions0 = {    
     localStorageReload: () => (props: StoreProps) => {
         const {setState, getState, dispatch} = props;
-    
+        
         let dataObj = store.get('dataStr');
         let data = null;
         let state = null;
     
-        console.log(`localStorageReload: ${jsext.toStr(dataObj)}`)
+        console.log(`localStorageReload: ${JSExt.toStr(dataObj)}`)
         if (dataObj){
             if (typeof dataObj === 'string') {
                 data = JSON.parse(dataObj);
@@ -274,14 +235,15 @@ const actions0 = {
         editorGrammars = [...editorGrammars];
         const hasPredefined = editorGrammars.find(eg => eg.grammar.predefined);
         if (!hasPredefined) {
-            [...getState().predefinedGrammars].reverse().forEach(g => {
+            let pd = [...getState().predefinedGrammars];
+            [...pd].reverse().forEach(g => {
                 const neg = EditorGrammarUtils.fromGrammar(g);
                 editorGrammars.unshift(neg);
             })
         }
         setState(s => ({...s, editorGrammars}));
 
-        dispatch(actions0.activeGrammarChanged());
+        dispatch(Actions0.activeGrammarChanged());
     },
     
     activeGrammarChanged: () => async (props: StoreProps) => {
@@ -298,27 +260,27 @@ const actions0 = {
         }
 
         const eg = getState().editorGrammars[getState().editorGrammarIdx];
+        let grammarTags = [];
         try {
             //attempt to load plugin ...
             if (!eg.plugin) {
-                const grammarPlugin = await getState().grammarLoader.load(eg.grammar.url);
-                eg.plugin = grammarPlugin;
+                await EditorGrammarUtils.reload(eg, getState().grammarLoader);
             }
-            const grammarTags = [...await eg.plugin.getOption(OPTION_ROOT_TAGS)];
-
-            setState(s => {            
-                return {
-                    ...s,
-                    editorGrammar: eg,
-                    grammarTags,
-                    grammarTag: grammarTags?.length > 0 && grammarTags[0]
-                };
-            });
-            dispatch(actions.stateToStorage())
+            grammarTags = [...await eg.plugin.getOption(OPTION_ROOT_TAGS)];
         } catch (e) {
             eg.loadError = true;
             getState().notifyShow(`Error loading grammar from: ${eg.grammar.url}`, 'error')
         }
+
+        setState(s => {            
+            return {
+                ...s,
+                editorGrammar: eg,
+                grammarTags,
+                grammarTag: grammarTags?.length > 0 && grammarTags[0]
+            };
+        });
+        dispatch(Actions.stateToStorage())
     }    
 }
 
@@ -351,26 +313,4 @@ function mapSharableState(obj: any, isLoaded: boolean) {
     }
 }
 
-interface StoreType {
-    clientId: string,
-    shareStr: string,
-    expression: string,
-    contextStr: string,
-    predefinedGrammars: Grammar[],
-    editorGrammars: EditorGrammar[],
-    editorGrammarIdx: number,
-    editorGrammar: EditorGrammar,
-    grammarTag: string,
-    grammarTags: string[],
-    grammarLoader: GrammarLoader,
-    notifyShow: (...args : any) => void,
-    layout: []
-}
-
-interface StoreProps {
-    setState: (producer: (draftState: StoreType) => void) => void;
-    getState: () => StoreType;
-    dispatch: any;
-}
-
-export const useStore = createHook(Store);
+export default Actions;

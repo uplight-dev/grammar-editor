@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import Modal from 'react-modal';
 import { PopupProvider, withPopups } from 'react-popup-manager';
 import { Tab, TabPanel, Tabs } from 'react-tabs';
-import { useStore } from "../ctx/ctx";
+import { useStore } from "../store/store";
 import GrammarEditor from "./grammareditor";
 import TabListExt from './tablistext';
 import GrammarComponent from "./grammarinspector";
@@ -27,6 +27,7 @@ const App: FunctionalComponent<any> = ({popupManager}) => {
 
     useEffect(() => {
         storeActions.setNotifyShow(notify.createShowQueue());
+        storeActions.setPopupManager(popupManager);
     },[])
 
     useEffect(() => {

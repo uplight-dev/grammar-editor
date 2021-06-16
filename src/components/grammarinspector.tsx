@@ -7,29 +7,23 @@ import { FunctionalComponent, h } from "preact";
 import { Ref, useEffect, useRef, useState } from "preact/hooks";
 import Toggle from 'react-toggle';
 import { Stack } from 'stack-typescript';
-import { DEF_LAYOUT, useStore } from '../ctx/ctx';
+import { DEF_LAYOUT, useStore } from '../store/store';
 import StyledButton from './styledbutton';
 import CodeMirrorExt from './codemirrorext';
 import { TreeNode } from './treenode';
+import BigMessage from './bigmessage';
 
 const GrammarInspector: FunctionalComponent<any> = () => {
   const [storeState, storeActions] = useStore();
 
-  if (!storeState.editorGrammar) {
-    return (<div style="width: 100%; height: 100%; display:flex; justify-content:center; align-items: center; font-size: 2em">
-    <span style="background-color: yellow">Loading ...</span>
-    </div>);
+  const tags = storeState.grammarTags;
+  if (!storeState.editorGrammar || !tags || tags.length == 0) {
+    return (<BigMessage msg="Invalid Grammar ..."></BigMessage>);
   }
 
   const codeEditor = useRef<CodeMirror.Editor>(null);
   const contextEditor = useRef<CodeMirror.Editor>(null);
   const grammarTagSelect: Ref<HTMLSelectElement> = useRef();
-
-  const tags = storeState.grammarTags;
-  if (!tags || tags.length == 0) {
-    alert('Invalid grammar provided!')
-    throw "Invalid grammar provided!";
-  }
 
   const [state, setState] = useState<State>({
     syntaxHighlight: true,

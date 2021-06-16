@@ -109,7 +109,7 @@ class LiveEndpoint implements GrammarEndpoint {
                 });
                 if (r.status == 200) {
                     const json = await r.json();
-                    return json[OPTION_ROOT_TAGS];
+                    return json[key];
                 }
                 if (r.status == 404) {//not available, skip
                     return null;

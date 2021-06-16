@@ -55,11 +55,23 @@ body {
     height: 100%;
 }
 
+.fullscreen {
+    height: 100%;
+}
 
-/* INSPECT GRID */
+/* LAYOUTING */
 .vcontainer {
     display: flex;
     flex-direction: column;
+}
+
+.hcontainer {
+    display: flex;
+    flex-direction: row;
+}
+
+.height-300 {
+    height: 300px;
 }
 
 .cm-content {

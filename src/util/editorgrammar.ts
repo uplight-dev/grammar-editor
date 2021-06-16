@@ -1,5 +1,6 @@
 import { OPTION_EDITOR_URL, OPTION_SUPPORTS, JSONMapping } from '@grammar-editor/grammar-editor-api'
 import { GrammarPlugin } from "../util";
+import GrammarLoader from './grammarplugin/loader';
 import JSExt from './jsext';
 
 export const DEFAULT_JSON_MAPPING : JSONMapping = {
@@ -61,6 +62,16 @@ export class EditorGrammarUtils {
     const copy = new EditorGrammar();
     copy.set({grammar});
     return copy;
+  }
+
+  static async reload(eg: EditorGrammar, loader: GrammarLoader): Promise<EditorGrammar> {
+    const grammarPlugin = await loader.load(eg.grammar.url);
+    const supportsArr = await grammarPlugin.getOption(OPTION_SUPPORTS) as string[];
+    const extEditorUrl = await grammarPlugin.getOption(OPTION_EDITOR_URL);
+    eg.supportsArr = supportsArr;
+    eg.plugin = grammarPlugin;
+    eg.externalEditorUrl = extEditorUrl;
+    return eg;
   }
 
   static async from(url: string, grammarPlugin: GrammarPlugin): Promise<EditorGrammar> {
