@@ -5,9 +5,9 @@
     "author": "uplight-dev <uplight.dev@gmail.com>",
     "private": false,
     "scripts": {
-        "build": "preact build --no-prerender #no-prerender due to issue with including codemirror",
+        "build": "export NODE_OPTIONS=--openssl-legacy-provider; preact build --no-prerender #no-prerender due to issue with including codemirror",
         "serve": "sirv build --port 8080 --cors --single",
-        "dev": "preact watch",
+        "dev": "export NODE_OPTIONS=--openssl-legacy-provider; preact watch",
         "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
         "test": "jest ./tests"
     },
@@ -30,10 +30,10 @@
         "lodash-es": "^4.17.15",
         "node-json-transform": "^1.1.1",
         "path": "^0.12.7",
-        "preact": "^10.5.7",
+        "preact": "^10.5.15",
         "preact-jsx-chai": "^3.0.0",
         "preact-markup": "^2.0.0",
-        "preact-render-to-string": "^5.1.4",
+        "preact-render-to-string": "^5.1.19",
         "preact-router": "^3.2.1",
         "react-awesome-button": "^6.5.1",
         "react-full-screen": "^1.0.1",
@@ -69,7 +69,7 @@
         "jest-preset-preact": "^4.0.2",
         "lezer": "^0.12.0",
         "lint-staged": "^10.0.7",
-        "preact-cli": "^3.0.0",
+        "preact-cli": "^3.0.0-rc.18",
         "prettier": "^1.19.1",
         "sirv": "^1.0.7",
         "typescript": "^4.1.2"
